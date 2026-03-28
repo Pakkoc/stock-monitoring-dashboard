@@ -1,0 +1,162 @@
+# docker-compose.prod.yml — Production overrides
+# Usage: docker compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+
+services:
+  api:
+    build:
+      target: production
+    ports: !override []  # No direct port exposure in production
+    volumes: !override
+      - api-logs:/app/logs
+    environment:
+      NODE_ENV: production
+    command: node dist/main.js
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 2G
+          cpus: '2.0'
+        reservations:
+          memory: 512M
+          cpus: '0.5'
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:3001/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+        tag: "api"
+
+  web:
+    build:
+      target: production
+    ports: !override []
+    volumes: !override []
+    environment:
+      NODE_ENV: production
+    command: node server.js
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '1.0'
+        reservations:
+          memory: 256M
+          cpus: '0.25'
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:3000/api/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    logging:
+      driver: json-file
+      options:
+        max-size: "50m"
+        max-file: "5"
+        tag: "web"
+
+  postgres:
+    ports: !override []  # No external access in production
+    environment:
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 4G
+          cpus: '2.0'
+        reservations:
+          memory: 1G
+          cpus: '0.5'
+    # Production-tuned PostgreSQL configuration
+    command: >
+      postgres
+        -c shared_buffers=1GB
+        -c effective_cache_size=3GB
+        -c work_mem=64MB
+        -c maintenance_work_mem=256MB
+        -c max_connections=100
+        -c wal_buffers=16MB
+        -c checkpoint_completion_target=0.9
+        -c random_page_cost=1.1
+        -c effective_io_concurrency=200
+        -c max_wal_size=2GB
+        -c min_wal_size=1GB
+        -c log_min_duration_statement=1000
+        -c log_checkpoints=on
+        -c log_connections=on
+        -c log_disconnections=on
+        -c log_lock_waits=on
+        -c log_statement=ddl
+        -c log_temp_files=0
+        -c timescaledb.max_background_workers=4
+    logging:
+      driver: json-file
+      options:
+        max-size: "100m"
+        max-file: "10"
+        tag: "postgres"
+
+  redis:
+    ports: !override []
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+          cpus: '0.5'
+        reservations:
+          memory: 256M
+          cpus: '0.1'
+    command: >
+      redis-server
+        --appendonly yes
+        --maxmemory 768mb
+        --maxmemory-policy allkeys-lru
+        --save 21600 1
+        --save 3600 100
+        --save 300 10000
+        --loglevel notice
+    logging:
+      driver: json-file
+      options:
+        max-size: "20m"
+        max-file: "5"
+        tag: "redis"
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    restart: always
+    command: tunnel run
+    environment:
+      TUNNEL_TOKEN: ${CLOUDFLARE_TUNNEL_TOKEN}
+    depends_on:
+      api:
+        condition: service_healthy
+      web:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          memory: 256M
+          cpus: '0.25'
+    networks:
+      - app-network
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+        tag: "cloudflared"
+
+volumes:
+  api-logs:
+    driver: local

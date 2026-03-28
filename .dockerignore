@@ -1,0 +1,27 @@
+# .dockerignore
+node_modules
+.next
+dist
+coverage
+.git
+.github
+*.md
+!README.md
+.env
+.env.*
+!.env.example
+docker-compose*.yml
+playwright-report
+test-results
+.turbo
+.claude
+research
+planning
+docs
+prompt
+coding-resource
+translations
+autopilot-logs
+pacs-logs
+testing
+final

@@ -1,0 +1,7 @@
+{
+  "name": "@stock-dashboard/tsconfig",
+  "version": "0.0.0",
+  "private": true,
+  "license": "MIT",
+  "files": ["base.json", "nestjs.json", "nextjs.json"]
+}

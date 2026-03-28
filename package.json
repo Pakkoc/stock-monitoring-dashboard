@@ -1,0 +1,36 @@
+{
+  "name": "stock-monitoring-dashboard",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Real-time Korean stock monitoring dashboard with AI-powered surge analysis",
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "test": "turbo test",
+    "test:api": "pnpm --filter @stock-dashboard/api test",
+    "test:web": "pnpm --filter @stock-dashboard/web test",
+    "test:e2e": "pnpm --filter @stock-dashboard/web test:e2e",
+    "test:cov": "turbo test -- --coverage",
+    "typecheck": "turbo typecheck",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,md,yaml,yml}\"",
+    "clean": "turbo clean && rm -rf node_modules",
+    "db:migrate": "pnpm --filter api prisma migrate dev",
+    "db:generate": "pnpm --filter api prisma generate",
+    "db:studio": "pnpm --filter api prisma studio",
+    "deploy": "bash scripts/deploy.sh",
+    "backup": "bash scripts/backup.sh"
+  },
+  "devDependencies": {
+    "turbo": "^2.4.0",
+    "prettier": "^3.4.2",
+    "prettier-plugin-tailwindcss": "^0.6.11",
+    "@changesets/cli": "^2.27.12"
+  },
+  "packageManager": "pnpm@9.15.4",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=9.0.0"
+  }
+}
