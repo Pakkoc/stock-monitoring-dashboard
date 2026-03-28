@@ -1,12 +1,85 @@
+# ============================================================
+# Stock Monitoring Dashboard — .gitignore
+# ============================================================
+
+# ─── Dependencies ────────────────────────────────────────────
+node_modules/
+.pnpm-store/
+
+# ─── Build outputs ──────────────────────────────────────────
+dist/
+.next/
+.turbo/
+out/
+*.tsbuildinfo
+
+# ─── Environment files — NEVER commit ──────────────────────
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.production
+
+# ─── Testing ────────────────────────────────────────────────
+coverage/
+playwright-report/
+test-results/
+.nyc_output/
+
+# ─── IDE ────────────────────────────────────────────────────
+.idea/
+.vscode/settings.json
+*.swp
+*.swo
+
+# ─── OS ─────────────────────────────────────────────────────
 .DS_Store
+Thumbs.db
+
+# ─── Docker volumes ─────────────────────────────────────────
+pgdata/
+redisdata/
+
+# ─── Backups (may contain database dumps) ───────────────────
+backups/
+
+# ─── Python (AgenticWorkflow tools) ─────────────────────────
 __pycache__/
+
+# ─── PDF (except coding resources) ──────────────────────────
 *.pdf
 !coding-resource/*.pdf
 
-# Context Preservation System — session-specific runtime data
+# ─── Prisma ─────────────────────────────────────────────────
+apps/api/prisma/generated/
+
+# ─── Logs ───────────────────────────────────────────────────
+*.log
+logs/
+
+# ─── Vercel ────────────────────────────────────────────────
+.vercel/
+
+# ─── Cloudflare Tunnel credentials ─────────────────────────
+*.pem
+.cloudflared/
+
+# ─── Sentry ────────────────────────────────────────────────
+.sentryclirc
+
+# ─── Playwright browsers ──────────────────────────────────
+apps/web/e2e/.auth/
+
+# ─── Misc build artifacts ─────────────────────────────────
+*.tgz
+.cache/
+storybook-static/
+
+# ─── Context Preservation System — session-specific runtime data
 .claude/context-snapshots/
 
-# D-1: Workflow runtime directories (generated during workflow execution)
+# ─── D-1: Workflow runtime directories (generated during workflow execution)
 verification-logs/
 autopilot-logs/
 pacs-logs/
@@ -15,8 +88,8 @@ diagnosis-logs/
 translations/*
 !translations/glossary.yaml
 
-# TDD Guard toggle — personal workflow setting (not shared)
+# ─── TDD Guard toggle — personal workflow setting (not shared)
 .tdd-guard
 
-# Setup Hook logs — runtime diagnostics (regenerated on each run)
+# ─── Setup Hook logs — runtime diagnostics (regenerated on each run)
 .claude/hooks/*.log
