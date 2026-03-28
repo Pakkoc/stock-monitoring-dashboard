@@ -1,0 +1,61 @@
+workflow:
+  name: "stock-monitoring-dashboard"
+  current_step: 24
+  status: "completed"
+
+  parent_genome:
+    source: "AgenticWorkflow"
+    version: "2026-03-28"
+    inherited_dna:
+      - "absolute-criteria"
+      - "sot-pattern"
+      - "3-phase-structure"
+      - "4-layer-qa"
+      - "safety-hooks"
+      - "adversarial-review"
+      - "decision-log"
+      - "context-preservation"
+      - "cross-step-traceability"
+      - "cap-coding-anchors"
+
+  outputs:
+    step-1: "research/step-1-kis-api-research.md"
+    step-2: "research/step-2-database-research.md"
+    step-3: "research/step-3-frontend-research.md"
+    step-4: "research/step-4-ai-pipeline-research.md"
+    step-5: "research/step-5-news-research.md"
+    step-6: "research/step-6-research-synthesis.md"
+    step-7: "planning/step-7-system-architecture.md"
+    step-8: "planning/step-8-schema-api-design.md"
+    step-9: "planning/step-9-frontend-design.md"
+    step-10: "planning/step-10-ai-agent-design.md"
+    step-11: "planning/step-11-devops-design.md"
+    step-12: "planning/step-12-planning-synthesis.md"
+
+  pending_human_action:
+    step: null
+    options: []
+
+  autopilot:
+    enabled: true
+    decision_log_dir: "autopilot-logs/"
+    auto_approved_steps: []
+
+  pacs:
+    current_step_score: null
+    dimensions:
+      F: null
+      C: null
+      L: null
+    weak_dimension: null
+    pre_mortem_flag: null
+    history:
+      step-1: {score: 82, weak: "C"}
+      step-2: {score: 85, weak: "F"}
+      step-3: {score: 83, weak: "C"}
+      step-4: {score: 80, weak: "F"}
+      step-5: {score: 84, weak: "L"}
+
+  verification:
+    last_verified_step: 12
+    retries: {}
