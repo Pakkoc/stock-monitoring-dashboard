@@ -1,0 +1,265 @@
+// =============================================================================
+// Stock Monitoring Dashboard — Complete Prisma Schema
+// =============================================================================
+// Target: PostgreSQL 17 + TimescaleDB 2.x
+// ORM: Prisma 7.x (ESM-only, pure TypeScript engine)
+// Convention: camelCase in Prisma → snake_case in DB via @map
+// =============================================================================
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// =============================================================================
+// Enums
+// =============================================================================
+
+enum Role {
+  ADMIN @map("admin")
+  USER  @map("user")
+
+  @@map("role")
+}
+
+enum Market {
+  KOSPI  @map("KOSPI")
+  KOSDAQ @map("KOSDAQ")
+
+  @@map("market")
+}
+
+enum AlertConditionType {
+  PRICE_ABOVE  @map("price_above")
+  PRICE_BELOW  @map("price_below")
+  CHANGE_RATE  @map("change_rate")
+  VOLUME_SURGE @map("volume_surge")
+
+  @@map("alert_condition_type")
+}
+
+enum AnalysisType {
+  SURGE         @map("surge")
+  DAILY_SUMMARY @map("daily_summary")
+  THEME_REPORT  @map("theme_report")
+
+  @@map("analysis_type")
+}
+
+// =============================================================================
+// Users
+// =============================================================================
+
+model User {
+  id             Int      @id @default(autoincrement())
+  email          String   @unique @db.VarChar(255)
+  passwordHash   String   @map("password_hash")
+  name           String   @db.VarChar(100)
+  role           Role     @default(USER)
+  surgeThreshold Decimal  @default(5.0) @map("surge_threshold_pct") @db.Decimal(5, 2)
+  settingsJson   Json?    @map("settings_json")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  watchlists Watchlist[]
+  alerts     Alert[]
+
+  @@map("users")
+}
+
+// =============================================================================
+// Stocks (master data)
+// =============================================================================
+
+model Stock {
+  id       Int      @id @default(autoincrement())
+  symbol   String   @unique @db.VarChar(20)
+  name     String   @db.VarChar(100)
+  market   Market
+  sector   String?  @db.VarChar(50)
+  isActive Boolean  @default(true) @map("is_active")
+  listedAt DateTime? @map("listed_at") @db.Date
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  watchlistItems WatchlistItem[]
+  themeStocks    ThemeStock[]
+  newsStocks     NewsStock[]
+  aiAnalyses     AiAnalysis[]
+  alerts         Alert[]
+
+  @@index([market, isActive], map: "idx_stocks_market_active")
+  @@map("stocks")
+}
+
+// =============================================================================
+// Stock Prices (TimescaleDB hypertable)
+// =============================================================================
+// NOTE: This table is managed as a TimescaleDB hypertable.
+// After Prisma migration creates the base table, a custom SQL migration
+// converts it: SELECT create_hypertable('stock_prices', by_range('time', INTERVAL '1 day'));
+// Hypertables cannot have standard auto-increment PKs.
+
+model StockPrice {
+  time       DateTime @db.Timestamptz()
+  stockId    Int      @map("stock_id")
+  symbol     String   @db.VarChar(20)
+  open       Decimal  @db.Decimal(12, 2)
+  high       Decimal  @db.Decimal(12, 2)
+  low        Decimal  @db.Decimal(12, 2)
+  close      Decimal  @db.Decimal(12, 2)
+  volume     BigInt   @default(0)
+  tradeValue BigInt   @default(0) @map("trade_value")
+  changeRate Decimal? @map("change_rate") @db.Decimal(8, 4)
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@unique([time, stockId], map: "uq_stock_prices_time_stock")
+  @@index([stockId, time(sort: Desc)], map: "idx_stock_prices_stock_time")
+  @@index([symbol, time(sort: Desc)], map: "idx_stock_prices_symbol_time")
+  @@map("stock_prices")
+}
+
+// =============================================================================
+// Watchlists
+// =============================================================================
+
+model Watchlist {
+  id        Int      @id @default(autoincrement())
+  userId    Int      @map("user_id")
+  name      String   @db.VarChar(100)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user  User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items WatchlistItem[]
+
+  @@index([userId], map: "idx_watchlists_user")
+  @@map("watchlists")
+}
+
+model WatchlistItem {
+  id          Int      @id @default(autoincrement())
+  watchlistId Int      @map("watchlist_id")
+  stockId     Int      @map("stock_id")
+  addedAt     DateTime @default(now()) @map("added_at")
+
+  watchlist Watchlist @relation(fields: [watchlistId], references: [id], onDelete: Cascade)
+  stock     Stock     @relation(fields: [stockId], references: [id])
+
+  @@unique([watchlistId, stockId], map: "uq_watchlist_items_wl_stock")
+  @@map("watchlist_items")
+}
+
+// =============================================================================
+// Themes
+// =============================================================================
+
+model Theme {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique @db.VarChar(100)
+  description String?
+  isSystem    Boolean  @default(false) @map("is_system")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  themeStocks ThemeStock[]
+
+  @@map("themes")
+}
+
+model ThemeStock {
+  id      Int      @id @default(autoincrement())
+  themeId Int      @map("theme_id")
+  stockId Int      @map("stock_id")
+  addedAt DateTime @default(now()) @map("added_at")
+
+  theme Theme @relation(fields: [themeId], references: [id], onDelete: Cascade)
+  stock Stock @relation(fields: [stockId], references: [id])
+
+  @@unique([themeId, stockId], map: "uq_theme_stocks_theme_stock")
+  @@index([themeId], map: "idx_theme_stocks_theme")
+  @@index([stockId], map: "idx_theme_stocks_stock")
+  @@map("theme_stocks")
+}
+
+// =============================================================================
+// News
+// =============================================================================
+
+model News {
+  id          Int      @id @default(autoincrement())
+  title       String
+  url         String   @unique
+  source      String   @db.VarChar(50)
+  summary     String?
+  content     String?
+  publishedAt DateTime @map("published_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  newsStocks NewsStock[]
+
+  // NOTE: Full-text search index (GIN on tsvector) is created via custom migration SQL.
+  // See step-8-schema-api-design.md §2.3 for the generated column + GIN index DDL.
+  @@index([publishedAt(sort: Desc)], map: "idx_news_published")
+  @@map("news")
+}
+
+model NewsStock {
+  id             Int     @id @default(autoincrement())
+  newsId         Int     @map("news_id")
+  stockId        Int     @map("stock_id")
+  relevanceScore Decimal @default(0) @map("relevance_score") @db.Decimal(5, 4)
+
+  news  News  @relation(fields: [newsId], references: [id], onDelete: Cascade)
+  stock Stock @relation(fields: [stockId], references: [id])
+
+  @@unique([newsId, stockId], map: "uq_news_stocks_news_stock")
+  @@index([stockId, relevanceScore(sort: Desc)], map: "idx_news_stocks_stock_relevance")
+  @@map("news_stocks")
+}
+
+// =============================================================================
+// AI Analyses
+// =============================================================================
+
+model AiAnalysis {
+  id              Int          @id @default(autoincrement())
+  stockId         Int          @map("stock_id")
+  analysisType    AnalysisType @map("analysis_type")
+  result          Json
+  confidenceScore Decimal      @map("confidence_score") @db.Decimal(5, 4)
+  qgL1Pass        Boolean      @default(false) @map("qg_l1_pass")
+  qgL2Pass        Boolean      @default(false) @map("qg_l2_pass")
+  qgL3Pass        Boolean      @default(false) @map("qg_l3_pass")
+  sourcesJson     Json?        @map("sources_json")
+  createdAt       DateTime     @default(now()) @map("created_at")
+
+  stock Stock @relation(fields: [stockId], references: [id])
+
+  @@index([stockId, createdAt(sort: Desc)], map: "idx_ai_analyses_stock_time")
+  @@map("ai_analyses")
+}
+
+// =============================================================================
+// Alerts
+// =============================================================================
+
+model Alert {
+  id              Int                @id @default(autoincrement())
+  userId          Int                @map("user_id")
+  stockId         Int                @map("stock_id")
+  conditionType   AlertConditionType @map("condition_type")
+  threshold       Decimal            @db.Decimal(12, 2)
+  isActive        Boolean            @default(true) @map("is_active")
+  lastTriggeredAt DateTime?          @map("last_triggered_at")
+  createdAt       DateTime           @default(now()) @map("created_at")
+
+  user  User  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  stock Stock @relation(fields: [stockId], references: [id])
+
+  @@index([userId, isActive], map: "idx_alerts_user_active")
+  @@index([stockId, conditionType], map: "idx_alerts_stock_condition")
+  @@map("alerts")
+}
