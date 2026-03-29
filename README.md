@@ -29,8 +29,8 @@
 - 뉴스 + 공시 + 테마 정보 종합 분석
 
 ### 3. 실시간 데이터
-- 한국투자증권 OpenAPI WebSocket 연동
-- 5초 이내 시세 반영
+- 키움증권 REST API 5초 폴링 실시간 연동
+- 5초 간격 시세 반영 (변경 시에만 이벤트 발생)
 - Redis Pub/Sub → Socket.IO → 브라우저 차트
 
 ### 4. 개인화
@@ -54,7 +54,7 @@
 | AI | LangChain.js + LangGraph.js (Claude / GPT-4o) |
 | DB | PostgreSQL 17 + TimescaleDB |
 | Cache | Redis 8 |
-| 증권API | 한국투자증권 OpenAPI |
+| 증권API | 키움증권 REST API (5초 폴링) |
 | 뉴스 | RSS 피드 11개 (한경, 매경, 파이낸셜, 헤럴드, 연합, 머니투데이 등) |
 | CI/CD | GitHub Actions |
 | 배포 | Vercel (프론트) + Docker + Cloudflare Tunnel (백엔드) |
@@ -69,7 +69,7 @@ stock-monitoring-dashboard/
 │   ├── api/                    # NestJS 백엔드
 │   │   ├── src/
 │   │   │   ├── modules/
-│   │   │   │   ├── stock/      # 주식 시세, 정렬/필터, KIS API 연동
+│   │   │   │   ├── stock/      # 주식 시세, 정렬/필터, 키움증권 API 연동
 │   │   │   │   ├── news/       # 뉴스 수집 (Naver, RSS, DART)
 │   │   │   │   ├── ai-agent/   # LangGraph 급등 분석 파이프라인
 │   │   │   │   ├── portfolio/  # 관심종목, 알림
@@ -107,7 +107,7 @@ stock-monitoring-dashboard/
 - Node.js 22 LTS
 - pnpm 9+
 - Docker & Docker Compose
-- API 키: 한국투자증권, Anthropic (또는 OpenAI)
+- API 키: 키움증권 REST API, Anthropic (또는 OpenAI)
 - 선택: DART API 키, Naver Developer (RSS 피드로 대체 가능)
 
 ### 로컬 개발

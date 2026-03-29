@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { StockController } from './stock.controller';
 import { StockService } from './stock.service';
 import { StockGateway } from './stock.gateway';
-import { KisApiService } from './services/kis-api.service';
-import { KisWebsocketService } from './services/kis-websocket.service';
+import { KiwoomApiService } from './services/kiwoom-api.service';
+import { StockPollingService } from './services/stock-polling.service';
 import { StockDataPipelineService } from './services/stock-data-pipeline.service';
 import { StockQueueService } from './services/stock-queue.service';
 
@@ -13,20 +13,20 @@ import { StockQueueService } from './services/stock-queue.service';
  * Responsibilities:
  * - REST endpoints for stock listing, detail, and price history
  * - Socket.IO Gateway for real-time price broadcasting
- * - KIS OpenAPI integration (REST + WebSocket)
- * - Real-time data pipeline: KIS WS → Redis Pub/Sub → Socket.IO + TimescaleDB
+ * - Kiwoom Securities REST API integration
+ * - Real-time data pipeline: Polling (5s) → Redis Pub/Sub → Socket.IO + TimescaleDB
  * - Bull queue for async batch inserts and surge detection
  * - TimescaleDB raw SQL for OHLCV aggregation
  * - Market index tracking (KOSPI, KOSDAQ)
- * - Subscription management (41-sub limit per client)
+ * - Subscription management (configurable, default 50 stocks)
  *
  * Initialization order (via NestJS DI + OnModuleInit):
- *   1. KisApiService — authenticates with KIS REST API, stores token in Redis
- *   2. KisWebsocketService — acquires approval key, connects WebSocket
+ *   1. KiwoomApiService — authenticates with Kiwoom REST API, stores token in Redis
+ *   2. StockPollingService — polls subscribed stocks every 5 seconds
  *   3. StockQueueService — initializes BullMQ queues and workers
  *   4. StockDataPipelineService — wires event listeners and Redis Pub/Sub
  *
- * Exports: StockService, StockGateway, KisApiService for cross-module consumption.
+ * Exports: StockService, StockGateway, KiwoomApiService for cross-module consumption.
  */
 @Module({
   controllers: [StockController],
@@ -35,9 +35,9 @@ import { StockQueueService } from './services/stock-queue.service';
     StockService,
     StockGateway,
 
-    // KIS API integration (order matters for DI resolution)
-    KisApiService,
-    KisWebsocketService,
+    // Kiwoom API integration (order matters for DI resolution)
+    KiwoomApiService,
+    StockPollingService,
 
     // Async processing (StockQueueService must init before pipeline)
     StockQueueService,
@@ -45,6 +45,6 @@ import { StockQueueService } from './services/stock-queue.service';
     // Data pipeline (depends on all above)
     StockDataPipelineService,
   ],
-  exports: [StockService, StockGateway, KisApiService],
+  exports: [StockService, StockGateway, KiwoomApiService],
 })
 export class StockModule {}

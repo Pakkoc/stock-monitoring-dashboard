@@ -10,9 +10,9 @@ import { PrismaService } from '../../../shared/database/prisma.service';
 import { RedisService } from '../../../shared/redis/redis.service';
 import { StockGateway } from '../stock.gateway';
 import {
-  KIS_REALTIME_PRICE_EVENT,
-  type KisRealtimePrice,
-} from './kis-websocket.service';
+  REALTIME_PRICE_EVENT,
+  type RealtimePrice,
+} from './stock-polling.service';
 import { StockQueueService } from './stock-queue.service';
 
 // ─── Types ──────────────────────────────────────────────────
@@ -126,14 +126,14 @@ export class StockDataPipelineService implements OnModuleInit, OnModuleDestroy {
     this.logger.log('Stock data pipeline destroyed');
   }
 
-  // ─── Event Handler: KIS WebSocket → Pipeline ───────────
+  // ─── Event Handler: Polling Service → Pipeline ─────────
 
   /**
-   * Handle real-time price events from KIS WebSocket.
+   * Handle real-time price events from polling service.
    * This is the entry point of the pipeline.
    */
-  @OnEvent(KIS_REALTIME_PRICE_EVENT)
-  async handleRealtimePrice(price: KisRealtimePrice): Promise<void> {
+  @OnEvent(REALTIME_PRICE_EVENT)
+  async handleRealtimePrice(price: RealtimePrice): Promise<void> {
     // Gate: only process during market hours
     if (!this.isMarketOpen()) {
       return;
@@ -151,7 +151,7 @@ export class StockDataPipelineService implements OnModuleInit, OnModuleDestroy {
 
   // ─── Redis Pub/Sub ────────────────────────────────────
 
-  private async publishToRedis(price: KisRealtimePrice): Promise<void> {
+  private async publishToRedis(price: RealtimePrice): Promise<void> {
     try {
       const payload = JSON.stringify({
         symbol: price.symbol,
@@ -259,7 +259,7 @@ export class StockDataPipelineService implements OnModuleInit, OnModuleDestroy {
   /**
    * Buffer a price record for batch insert into TimescaleDB.
    */
-  private bufferPriceRecord(price: KisRealtimePrice): void {
+  private bufferPriceRecord(price: RealtimePrice): void {
     this.priceBuffer.push({
       symbol: price.symbol,
       time: this.parseTimeToDate(price.time),
@@ -324,7 +324,7 @@ export class StockDataPipelineService implements OnModuleInit, OnModuleDestroy {
    * Checks if absolute changeRate exceeds configurable thresholds.
    * Surges are classified by severity: MODERATE (5%), HIGH (10%), EXTREME (15%).
    */
-  private detectSurge(price: KisRealtimePrice): void {
+  private detectSurge(price: RealtimePrice): void {
     const absRate = Math.abs(price.changeRate);
 
     if (absRate < this.surgeThresholdModerate) return;

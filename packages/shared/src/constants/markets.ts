@@ -33,5 +33,11 @@ export const MARKET_HOURS = {
 /** Default surge threshold percentage */
 export const DEFAULT_SURGE_THRESHOLD = 5.0;
 
-/** Maximum WebSocket subscriptions per KIS session */
-export const KIS_MAX_SUBSCRIPTIONS = 41;
+/** Maximum stocks for polling-based real-time updates (Kiwoom REST API) */
+export const MAX_POLLING_SUBSCRIPTIONS = 50;
+
+/**
+ * @deprecated Use MAX_POLLING_SUBSCRIPTIONS instead.
+ * Kept for backward compatibility with frontend code.
+ */
+export const KIS_MAX_SUBSCRIPTIONS = MAX_POLLING_SUBSCRIPTIONS;

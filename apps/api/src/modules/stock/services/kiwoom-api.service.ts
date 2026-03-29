@@ -7,35 +7,32 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { RedisService } from '../../../shared/redis/redis.service';
 
-// ─── KIS API Response Types ─────────────────────────────────
+// ─── Kiwoom API Response Types ──────────────────────────────
 
-/** Generic KIS REST response wrapper */
-interface KisResponse<T> {
-  rt_cd: string;   // "0" = success, "1" = failure
-  msg_cd: string;
-  msg1: string;
+/** Generic Kiwoom REST response wrapper */
+interface KiwoomResponse<T> {
+  return_code: string;   // "0" = success
+  return_msg: string;
   output: T;
 }
 
-/** Generic KIS REST response with output2 array (chart data) */
-interface KisResponseWithOutput2<T1, T2> {
-  rt_cd: string;
-  msg_cd: string;
-  msg1: string;
-  output1: T1;
-  output2: T2[];
+/** Generic Kiwoom REST response with output array (chart data, rankings) */
+interface KiwoomListResponse<T> {
+  return_code: string;
+  return_msg: string;
+  output: T[];
 }
 
-/** OAuth2 token response from /oauth2/tokenP */
-interface KisTokenResponse {
+/** OAuth2 token response */
+interface KiwoomTokenResponse {
   access_token: string;
   token_type: 'Bearer';
-  expires_in: number;                    // 7776000 (90 days)
+  expires_in: number;                    // seconds until expiry
   access_token_token_expired: string;    // "YYYY-MM-DD HH:MM:SS"
 }
 
-/** Current price output fields (TR: FHKST01010100) */
-interface KisCurrentPriceOutput {
+/** Current price output fields */
+interface KiwoomCurrentPriceOutput {
   stck_prpr: string;         // Current price
   prdy_vrss: string;         // Change from previous day
   prdy_vrss_sign: string;    // 1=up, 2=down, 3=same, 4=ceiling, 5=floor
@@ -51,11 +48,11 @@ interface KisCurrentPriceOutput {
   pbr: string;               // Price-to-Book Ratio
   eps: string;               // Earnings Per Share
   bps: string;               // Book Value Per Share
-  hts_avls: string;          // Market capitalization (억원)
+  hts_avls: string;          // Market capitalization
 }
 
-/** Daily chart record from output2 (TR: FHKST03010100) */
-interface KisDailyChartRecord {
+/** Daily chart record */
+interface KiwoomDailyChartRecord {
   stck_bsop_date: string;    // Trading date (yyyyMMdd)
   stck_oprc: string;         // Opening price
   stck_hgpr: string;         // High price
@@ -68,16 +65,8 @@ interface KisDailyChartRecord {
   prdy_ctrt: string;         // Change rate (%)
 }
 
-/** Daily chart output1 metadata (TR: FHKST03010100) */
-interface KisDailyChartOutput1 {
-  stck_prpr: string;
-  prdy_vrss: string;
-  prdy_vrss_sign: string;
-  prdy_ctrt: string;
-}
-
-/** Volume rank item (TR: FHPST01710000) */
-interface KisVolumeRankItem {
+/** Volume rank item */
+interface KiwoomVolumeRankItem {
   mksc_shrn_iscd: string;    // Stock code
   hts_kor_isnm: string;     // Stock name (Korean)
   data_rank: string;         // Rank
@@ -200,21 +189,20 @@ class TokenBucket {
 // ─── Service ────────────────────────────────────────────────
 
 @Injectable()
-export class KisApiService implements OnModuleInit, OnModuleDestroy {
-  private readonly logger = new Logger(KisApiService.name);
+export class KiwoomApiService implements OnModuleInit, OnModuleDestroy {
+  private readonly logger = new Logger(KiwoomApiService.name);
 
   // Configuration
   private readonly baseUrl: string;
   private readonly appKey: string;
   private readonly appSecret: string;
-  private readonly isProduction: boolean;
 
   // Token management
   private accessToken: string | null = null;
   private tokenExpiresAt: Date | null = null;
   private tokenRefreshTimer: ReturnType<typeof setInterval> | null = null;
 
-  // Rate limiter: 15 req/sec (safe margin under 20 limit)
+  // Rate limiter: 10 req/sec (conservative for Kiwoom)
   private readonly rateLimiter: TokenBucket;
 
   // Circuit breaker
@@ -227,8 +215,8 @@ export class KisApiService implements OnModuleInit, OnModuleDestroy {
   private recentErrors: number[] = [];
   private circuitOpenedAt: number | null = null;
 
-  private static readonly REDIS_TOKEN_KEY = 'kis:access_token';
-  private static readonly REDIS_TOKEN_EXPIRY_KEY = 'kis:token_expires_at';
+  private static readonly REDIS_TOKEN_KEY = 'kiwoom:access_token';
+  private static readonly REDIS_TOKEN_EXPIRY_KEY = 'kiwoom:token_expires_at';
   private static readonly TOKEN_REFRESH_BUFFER_MS = 5 * 60 * 1000; // 5 minutes
   private static readonly TOKEN_REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000; // 6 hours
 
@@ -236,21 +224,21 @@ export class KisApiService implements OnModuleInit, OnModuleDestroy {
     private readonly config: ConfigService,
     private readonly redis: RedisService,
   ) {
-    this.isProduction = this.config.get<string>('KIS_ENVIRONMENT', 'simulation') === 'production';
-    this.baseUrl = this.isProduction
-      ? 'https://openapi.koreainvestment.com:9443'
-      : 'https://openapivts.koreainvestment.com:29443';
-    this.appKey = this.config.get<string>('KIS_APP_KEY', '');
-    this.appSecret = this.config.get<string>('KIS_APP_SECRET', '');
+    this.baseUrl = this.config.get<string>(
+      'KIWOOM_BASE_URL',
+      'https://openapi.kiwoom.com/api',
+    );
+    this.appKey = this.config.get<string>('KIWOOM_APP_KEY', '');
+    this.appSecret = this.config.get<string>('KIWOOM_APP_SECRET', '');
 
-    const maxReqPerSec = this.isProduction ? 15 : 2;
-    this.rateLimiter = new TokenBucket(maxReqPerSec, maxReqPerSec);
+    // Conservative 10 req/sec rate limit for Kiwoom REST API
+    this.rateLimiter = new TokenBucket(10, 10);
   }
 
   async onModuleInit(): Promise<void> {
     if (!this.appKey || !this.appSecret) {
       this.logger.warn(
-        'KIS API credentials not configured (KIS_APP_KEY / KIS_APP_SECRET). KIS API calls will fail.',
+        'Kiwoom API credentials not configured (KIWOOM_APP_KEY / KIWOOM_APP_SECRET). Kiwoom API calls will fail.',
       );
       return;
     }
@@ -264,7 +252,7 @@ export class KisApiService implements OnModuleInit, OnModuleDestroy {
         await this.authenticate();
       } catch (error) {
         this.logger.error(
-          `Initial KIS authentication failed: ${error instanceof Error ? error.message : String(error)}`,
+          `Initial Kiwoom authentication failed: ${error instanceof Error ? error.message : String(error)}`,
         );
       }
     }
@@ -272,12 +260,10 @@ export class KisApiService implements OnModuleInit, OnModuleDestroy {
     // Schedule periodic token refresh (every 6 hours)
     this.tokenRefreshTimer = setInterval(
       () => void this.refreshToken(),
-      KisApiService.TOKEN_REFRESH_INTERVAL_MS,
+      KiwoomApiService.TOKEN_REFRESH_INTERVAL_MS,
     );
 
-    this.logger.log(
-      `KIS API client initialized (env=${this.isProduction ? 'production' : 'simulation'})`,
-    );
+    this.logger.log('Kiwoom API client initialized');
   }
 
   async onModuleDestroy(): Promise<void> {
@@ -285,14 +271,13 @@ export class KisApiService implements OnModuleInit, OnModuleDestroy {
       clearInterval(this.tokenRefreshTimer);
       this.tokenRefreshTimer = null;
     }
-    this.logger.log('KIS API client destroyed');
+    this.logger.log('Kiwoom API client destroyed');
   }
 
   // ─── Public API Methods ─────────────────────────────────
 
   /**
    * Get current price for a stock symbol.
-   * TR: FHKST01010100
    */
   async getCurrentPrice(symbol: string): Promise<CurrentPriceData> {
     this.logger.debug(`getCurrentPrice(${symbol})`);
@@ -302,10 +287,9 @@ export class KisApiService implements OnModuleInit, OnModuleDestroy {
       FID_INPUT_ISCD: symbol,
     });
 
-    const response = await this.request<KisResponse<KisCurrentPriceOutput>>(
+    const response = await this.request<KiwoomResponse<KiwoomCurrentPriceOutput>>(
       'GET',
-      '/uapi/domestic-stock/v1/quotations/inquire-price',
-      'FHKST01010100',
+      '/v1/quotations/inquire-price',
       params,
     );
 
@@ -333,7 +317,6 @@ export class KisApiService implements OnModuleInit, OnModuleDestroy {
 
   /**
    * Get daily chart data for a symbol.
-   * TR: FHKST03010100
    *
    * @param symbol    Stock code (e.g., "005930")
    * @param startDate Start date in yyyyMMdd format
@@ -357,16 +340,14 @@ export class KisApiService implements OnModuleInit, OnModuleDestroy {
       FID_ORG_ADJ_PRC: '0', // adjusted price
     });
 
-    const response = await this.request<
-      KisResponseWithOutput2<KisDailyChartOutput1, KisDailyChartRecord>
-    >(
+    const response = await this.request<KiwoomListResponse<KiwoomDailyChartRecord>>(
       'GET',
-      '/uapi/domestic-stock/v1/quotations/inquire-daily-itemchartprice',
-      'FHKST03010100',
+      '/v1/quotations/inquire-daily-chartprice',
       params,
     );
 
-    return response.output2.map((r) => ({
+    const records = Array.isArray(response.output) ? response.output : [];
+    return records.map((r) => ({
       date: r.stck_bsop_date,
       open: this.parseNum(r.stck_oprc),
       high: this.parseNum(r.stck_hgpr),
@@ -381,7 +362,6 @@ export class KisApiService implements OnModuleInit, OnModuleDestroy {
 
   /**
    * Get trading volume ranking.
-   * TR: FHPST01710000
    */
   async getVolumeRank(): Promise<VolumeRankItem[]> {
     this.logger.debug('getVolumeRank()');
@@ -400,14 +380,12 @@ export class KisApiService implements OnModuleInit, OnModuleDestroy {
       FID_INPUT_DATE_1: '',
     });
 
-    const response = await this.request<KisResponse<KisVolumeRankItem[]>>(
+    const response = await this.request<KiwoomListResponse<KiwoomVolumeRankItem>>(
       'GET',
-      '/uapi/domestic-stock/v1/quotations/volume-rank',
-      'FHPST01710000',
+      '/v1/quotations/volume-rank',
       params,
     );
 
-    // output is an array for this endpoint
     const items = Array.isArray(response.output) ? response.output : [];
     return items.map((item) => ({
       rank: this.parseNum(item.data_rank),
@@ -427,8 +405,7 @@ export class KisApiService implements OnModuleInit, OnModuleDestroy {
   /**
    * Get market index data (KOSPI or KOSDAQ).
    *
-   * Uses the same current-price endpoint with index codes:
-   *   KOSPI=0001, KOSDAQ=1001
+   * Uses index codes: KOSPI=0001, KOSDAQ=1001
    */
   async getMarketIndex(indexCode: '0001' | '1001'): Promise<MarketIndexData> {
     const marketLabel = indexCode === '0001' ? 'KOSPI' : 'KOSDAQ';
@@ -439,10 +416,9 @@ export class KisApiService implements OnModuleInit, OnModuleDestroy {
       FID_INPUT_ISCD: indexCode,
     });
 
-    const response = await this.request<KisResponse<KisCurrentPriceOutput>>(
+    const response = await this.request<KiwoomResponse<KiwoomCurrentPriceOutput>>(
       'GET',
-      '/uapi/domestic-stock/v1/quotations/inquire-price',
-      'FHKST01010100',
+      '/v1/quotations/inquire-price',
       params,
     );
 
@@ -456,36 +432,7 @@ export class KisApiService implements OnModuleInit, OnModuleDestroy {
     };
   }
 
-  /**
-   * Get WebSocket approval key. Required for KIS WebSocket authentication.
-   * This is separate from the REST access token.
-   */
-  async getApprovalKey(): Promise<string> {
-    this.logger.debug('Acquiring WebSocket approval key');
-
-    const response = await fetch(
-      `${this.getProductionBaseUrl()}/oauth2/Approval`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          grant_type: 'client_credentials',
-          appkey: this.appKey,
-          secretkey: this.appSecret, // Note: "secretkey", NOT "appsecret"
-        }),
-      },
-    );
-
-    if (!response.ok) {
-      throw new Error(`Approval key request failed: ${response.status} ${response.statusText}`);
-    }
-
-    const result = (await response.json()) as { approval_key: string };
-    this.logger.log('WebSocket approval key acquired');
-    return result.approval_key;
-  }
-
-  /** Check if KIS API credentials are configured */
+  /** Check if Kiwoom API credentials are configured */
   isConfigured(): boolean {
     return Boolean(this.appKey && this.appSecret);
   }
@@ -493,13 +440,12 @@ export class KisApiService implements OnModuleInit, OnModuleDestroy {
   // ─── Authentication ─────────────────────────────────────
 
   /**
-   * Authenticate with KIS API via OAuth2 client_credentials grant.
-   * POST /oauth2/tokenP
+   * Authenticate with Kiwoom API via OAuth2 client_credentials grant.
    */
   private async authenticate(): Promise<void> {
-    this.logger.log('Authenticating with KIS API...');
+    this.logger.log('Authenticating with Kiwoom API...');
 
-    const response = await fetch(`${this.baseUrl}/oauth2/tokenP`, {
+    const response = await fetch(`${this.baseUrl}/oauth2/token`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -510,10 +456,10 @@ export class KisApiService implements OnModuleInit, OnModuleDestroy {
     });
 
     if (!response.ok) {
-      throw new Error(`KIS token request failed: ${response.status} ${response.statusText}`);
+      throw new Error(`Kiwoom token request failed: ${response.status} ${response.statusText}`);
     }
 
-    const tokenData = (await response.json()) as KisTokenResponse;
+    const tokenData = (await response.json()) as KiwoomTokenResponse;
     this.accessToken = tokenData.access_token;
     this.tokenExpiresAt = new Date(tokenData.access_token_token_expired);
 
@@ -521,7 +467,7 @@ export class KisApiService implements OnModuleInit, OnModuleDestroy {
     await this.storeTokenInRedis();
 
     this.logger.log(
-      `KIS authentication successful. Token expires at ${this.tokenExpiresAt.toISOString()}`,
+      `Kiwoom authentication successful. Token expires at ${this.tokenExpiresAt.toISOString()}`,
     );
   }
 
@@ -533,7 +479,7 @@ export class KisApiService implements OnModuleInit, OnModuleDestroy {
         return;
       }
 
-      const bufferMs = KisApiService.TOKEN_REFRESH_BUFFER_MS;
+      const bufferMs = KiwoomApiService.TOKEN_REFRESH_BUFFER_MS;
       const remaining = this.tokenExpiresAt.getTime() - Date.now();
 
       if (remaining < bufferMs) {
@@ -554,29 +500,29 @@ export class KisApiService implements OnModuleInit, OnModuleDestroy {
     const ttlSeconds = Math.max(
       0,
       Math.floor(
-        (this.tokenExpiresAt.getTime() - Date.now() - KisApiService.TOKEN_REFRESH_BUFFER_MS) /
+        (this.tokenExpiresAt.getTime() - Date.now() - KiwoomApiService.TOKEN_REFRESH_BUFFER_MS) /
           1000,
       ),
     );
 
-    await this.redis.set(KisApiService.REDIS_TOKEN_KEY, this.accessToken, ttlSeconds);
+    await this.redis.set(KiwoomApiService.REDIS_TOKEN_KEY, this.accessToken, ttlSeconds);
     await this.redis.set(
-      KisApiService.REDIS_TOKEN_EXPIRY_KEY,
+      KiwoomApiService.REDIS_TOKEN_EXPIRY_KEY,
       this.tokenExpiresAt.toISOString(),
       ttlSeconds,
     );
   }
 
   private async restoreTokenFromRedis(): Promise<void> {
-    const token = await this.redis.get(KisApiService.REDIS_TOKEN_KEY);
-    const expiryStr = await this.redis.get(KisApiService.REDIS_TOKEN_EXPIRY_KEY);
+    const token = await this.redis.get(KiwoomApiService.REDIS_TOKEN_KEY);
+    const expiryStr = await this.redis.get(KiwoomApiService.REDIS_TOKEN_EXPIRY_KEY);
 
     if (token && expiryStr) {
       const expiry = new Date(expiryStr);
-      if (expiry.getTime() - Date.now() > KisApiService.TOKEN_REFRESH_BUFFER_MS) {
+      if (expiry.getTime() - Date.now() > KiwoomApiService.TOKEN_REFRESH_BUFFER_MS) {
         this.accessToken = token;
         this.tokenExpiresAt = expiry;
-        this.logger.log('Restored KIS token from Redis cache');
+        this.logger.log('Restored Kiwoom token from Redis cache');
       }
     }
   }
@@ -589,7 +535,6 @@ export class KisApiService implements OnModuleInit, OnModuleDestroy {
   private async request<T>(
     method: 'GET' | 'POST',
     path: string,
-    trId: string,
     params?: URLSearchParams,
     body?: Record<string, unknown>,
   ): Promise<T> {
@@ -612,8 +557,6 @@ export class KisApiService implements OnModuleInit, OnModuleDestroy {
       authorization: `Bearer ${this.accessToken}`,
       appkey: this.appKey,
       appsecret: this.appSecret,
-      tr_id: trId,
-      custtype: 'P',
     };
 
     const fetchOptions: RequestInit = {
@@ -625,17 +568,16 @@ export class KisApiService implements OnModuleInit, OnModuleDestroy {
       fetchOptions.body = JSON.stringify(body);
     }
 
-    return this.executeWithRetry<T>(url, fetchOptions, trId);
+    return this.executeWithRetry<T>(url, fetchOptions);
   }
 
   /**
    * Execute a fetch with exponential backoff retry on transient errors.
-   * Max 3 retries. On EGW00201 (rate limit), waits 1s then retries.
+   * Max 3 retries. On rate limit errors, waits 1s then retries.
    */
   private async executeWithRetry<T>(
     url: string,
     options: RequestInit,
-    trId: string,
     attempt = 0,
   ): Promise<T> {
     const maxRetries = 3;
@@ -647,38 +589,38 @@ export class KisApiService implements OnModuleInit, OnModuleDestroy {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      const data = (await response.json()) as T & { rt_cd?: string; msg_cd?: string; msg1?: string };
+      const data = (await response.json()) as T & { return_code?: string; return_msg?: string };
 
-      // Check for KIS-level errors
-      if (data.rt_cd === '1') {
-        const errorCode = data.msg_cd ?? 'UNKNOWN';
-        const errorMsg = data.msg1 ?? 'Unknown error';
+      // Check for Kiwoom-level errors
+      if (data.return_code && data.return_code !== '0') {
+        const errorCode = data.return_code;
+        const errorMsg = data.return_msg ?? 'Unknown error';
 
         // Rate limit error — wait and retry
-        if (errorCode === 'EGW00201' && attempt < maxRetries) {
+        if (errorCode === 'RATE_LIMIT' && attempt < maxRetries) {
           const delay = attempt === 0 ? 1000 : Math.pow(2, attempt) * 1000;
           this.logger.warn(
-            `KIS rate limit hit (${trId}). Retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})`,
+            `Kiwoom rate limit hit. Retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})`,
           );
           await new Promise<void>((resolve) => setTimeout(resolve, delay));
-          return this.executeWithRetry<T>(url, options, trId, attempt + 1);
+          return this.executeWithRetry<T>(url, options, attempt + 1);
         }
 
         // Token error — re-authenticate and retry once
         if (
-          (errorMsg.includes('token') || errorMsg.includes('TOKEN')) &&
+          (errorMsg.includes('token') || errorMsg.includes('TOKEN') || errorMsg.includes('auth')) &&
           attempt < 1
         ) {
-          this.logger.warn(`KIS token error (${trId}). Re-authenticating...`);
+          this.logger.warn('Kiwoom token error. Re-authenticating...');
           await this.authenticate();
           // Update auth header
           const headers = options.headers as Record<string, string>;
           headers['authorization'] = `Bearer ${this.accessToken}`;
-          return this.executeWithRetry<T>(url, options, trId, attempt + 1);
+          return this.executeWithRetry<T>(url, options, attempt + 1);
         }
 
         this.recordError();
-        throw new Error(`KIS API Error [${errorCode}]: ${errorMsg}`);
+        throw new Error(`Kiwoom API Error [${errorCode}]: ${errorMsg}`);
       }
 
       // Success — reset circuit breaker errors
@@ -689,10 +631,10 @@ export class KisApiService implements OnModuleInit, OnModuleDestroy {
       if (attempt < maxRetries && this.isTransientError(error)) {
         const delay = Math.pow(2, attempt) * 1000;
         this.logger.warn(
-          `KIS request failed (${trId}). Retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries}): ${error instanceof Error ? error.message : String(error)}`,
+          `Kiwoom request failed. Retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries}): ${error instanceof Error ? error.message : String(error)}`,
         );
         await new Promise<void>((resolve) => setTimeout(resolve, delay));
-        return this.executeWithRetry<T>(url, options, trId, attempt + 1);
+        return this.executeWithRetry<T>(url, options, attempt + 1);
       }
 
       this.recordError();
@@ -709,7 +651,7 @@ export class KisApiService implements OnModuleInit, OnModuleDestroy {
     // Check if token is about to expire
     if (
       this.tokenExpiresAt.getTime() - Date.now() <
-      KisApiService.TOKEN_REFRESH_BUFFER_MS
+      KiwoomApiService.TOKEN_REFRESH_BUFFER_MS
     ) {
       await this.authenticate();
     }
@@ -728,7 +670,7 @@ export class KisApiService implements OnModuleInit, OnModuleDestroy {
         return;
       }
       throw new Error(
-        'KIS API circuit breaker is OPEN. Requests are temporarily rejected.',
+        'Kiwoom API circuit breaker is OPEN. Requests are temporarily rejected.',
       );
     }
 
@@ -766,14 +708,6 @@ export class KisApiService implements OnModuleInit, OnModuleDestroy {
 
   // ─── Helpers ────────────────────────────────────────────
 
-  /**
-   * Always use the production URL for WebSocket approval key,
-   * since the WebSocket endpoint is shared.
-   */
-  private getProductionBaseUrl(): string {
-    return 'https://openapi.koreainvestment.com:9443';
-  }
-
   private isTransientError(error: unknown): boolean {
     if (error instanceof TypeError && error.message.includes('fetch')) return true;
     if (error instanceof Error) {
@@ -789,7 +723,7 @@ export class KisApiService implements OnModuleInit, OnModuleDestroy {
     return false;
   }
 
-  /** Parse a KIS numeric string to integer (handles empty/undefined) */
+  /** Parse a numeric string to integer (handles empty/undefined) */
   private parseNum(value: string | undefined): number {
     if (!value || value === '') return 0;
     const cleaned = value.replace(/,/g, '');
@@ -797,7 +731,7 @@ export class KisApiService implements OnModuleInit, OnModuleDestroy {
     return Number.isNaN(parsed) ? 0 : parsed;
   }
 
-  /** Parse a KIS numeric string to float (handles empty/undefined) */
+  /** Parse a numeric string to float (handles empty/undefined) */
   private parseFloat(value: string | undefined): number {
     if (!value || value === '') return 0;
     const cleaned = value.replace(/,/g, '');

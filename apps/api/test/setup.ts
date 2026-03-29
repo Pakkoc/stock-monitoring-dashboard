@@ -157,8 +157,9 @@ export function createMockConfigService(
     JWT_EXPIRY_HOURS: 24,
     REDIS_URL: 'redis://localhost:6379',
     DATABASE_URL: 'postgresql://test:test@localhost:5432/test',
-    KIS_APP_KEY: 'test-app-key',
-    KIS_APP_SECRET: 'test-app-secret',
+    KIWOOM_APP_KEY: 'test-app-key',
+    KIWOOM_APP_SECRET: 'test-app-secret',
+    KIWOOM_BASE_URL: 'https://openapi.kiwoom.com/api',
     NODE_ENV: 'test',
     ...overrides,
   };

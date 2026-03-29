@@ -46,7 +46,7 @@
 
 | API | 발급처 | 환경변수 | 필수 여부 |
 |-----|--------|----------|----------|
-| KIS (한국투자증권) | https://apiportal.koreainvestment.com | `KIS_APP_KEY`, `KIS_APP_SECRET` | **필수** |
+| 키움증권 (Kiwoom) | https://openapi.kiwoom.com | `KIWOOM_APP_KEY`, `KIWOOM_APP_SECRET` | **필수** |
 | Anthropic (Claude) | https://console.anthropic.com | `ANTHROPIC_API_KEY` | **필수** (AI 분석) |
 | DART (전자공시) | https://opendart.fss.or.kr | `DART_API_KEY` | 선택 |
 | Naver Search | https://developers.naver.com | `NAVER_CLIENT_ID` | 선택 (RSS로 대체) |
@@ -102,11 +102,10 @@ JWT_SECRET=<32자_이상_랜덤_문자열>
 SESSION_SECRET=<32자_이상_랜덤_문자열>
 
 # API 키: 각 서비스에서 발급받은 값 입력
-KIS_APP_KEY=<발급받은_키>
-KIS_APP_SECRET=<발급받은_시크릿>
-KIS_BASE_URL=https://openapi.koreainvestment.com:9443     # 실전
-KIS_WS_URL=ws://ops.koreainvestment.com:21000              # 실전
-KIS_ACCOUNT_NUMBER=<계좌번호>
+KIWOOM_APP_KEY=<발급받은_키>
+KIWOOM_APP_SECRET=<발급받은_시크릿>
+KIWOOM_BASE_URL=https://openapi.kiwoom.com/api
+KIWOOM_ACCOUNT_NUMBER=<계좌번호>
 NAVER_CLIENT_ID=<발급받은_ID>
 NAVER_CLIENT_SECRET=<발급받은_시크릿>
 DART_API_KEY=<발급받은_키>
@@ -352,12 +351,16 @@ Access to fetch at 'https://...' from origin 'https://...' has been blocked by C
 1. 미니PC의 `.env`에서 `FRONTEND_URL`이 Vercel 도메인과 일치하는지 확인
 2. API 재시작: `docker compose -f docker-compose.minipc.yml restart api`
 
-### WebSocket 연결 실패
+### Socket.IO 연결 실패
 
 ```
-# WebSocket은 Cloudflare Tunnel을 통해 정상 동작합니다.
+# Socket.IO는 Cloudflare Tunnel을 통해 정상 동작합니다.
 # 다만 Vercel의 NEXT_PUBLIC_WS_URL이 올바른 Tunnel URL인지 확인하세요.
 # Cloudflare Tunnel 대시보드에서 WebSocket이 활성화되어 있는지 확인하세요.
+# (Socket.IO는 내부적으로 WebSocket을 사용하므로 Tunnel의 WebSocket 지원이 필요합니다)
+#
+# 참고: 증권사 API와의 연동은 REST API 폴링 방식이므로 WebSocket이 아닙니다.
+# Socket.IO는 백엔드 → 브라우저 간 실시간 전송에만 사용됩니다.
 ```
 
 ### DB 연결 오류
