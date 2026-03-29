@@ -19,32 +19,33 @@ interface RssFeedSource {
 /**
  * RssFeedService — Parse RSS feeds from Korean financial news sources.
  *
- * Configured sources (from Step 5 research):
- * - 연합뉴스 경제
- * - 이데일리
- * - 매일경제
- * - 한국경제
- * - 서울경제
- * - 뉴시스 경제
- * - 인포스탁 데일리
- * - 이투데이
- * - 머니투데이
+ * Primary news source (Naver API 대체). API 키 불필요, 무료, 호출 제한 없음.
+ * 검증된 RSS 피드 URL 기반 (2026-03-29 확인).
  */
 @Injectable()
 export class RssFeedService {
   private readonly logger = new Logger(RssFeedService.name);
 
-  /** Configured Korean financial news RSS feeds */
+  /** Configured Korean financial news RSS feeds (verified 2026-03-29) */
   private readonly feeds: RssFeedSource[] = [
+    // 한국경제 (주식 + 경제)
+    { name: '한국경제 주식', url: 'http://rss.hankyung.com/stock.xml', sourceTag: 'RSS_HANKYUNG_STOCK' },
+    { name: '한국경제 경제', url: 'http://rss.hankyung.com/economy.xml', sourceTag: 'RSS_HANKYUNG_ECON' },
+    // 매일경제 (증권 + 헤드라인 + 경제)
+    { name: '매일경제 증권', url: 'http://file.mk.co.kr/news/rss/rss_50200011.xml', sourceTag: 'RSS_MK_STOCK' },
+    { name: '매일경제 헤드라인', url: 'http://file.mk.co.kr/news/rss/rss_30000001.xml', sourceTag: 'RSS_MK_HEAD' },
+    { name: '매일경제 경제', url: 'http://file.mk.co.kr/news/rss/rss_30100041.xml', sourceTag: 'RSS_MK_ECON' },
+    // 파이낸셜뉴스 (주식 + 금융)
+    { name: '파이낸셜뉴스 주식', url: 'http://www.fnnews.com/rss/fn_realnews_stock.xml', sourceTag: 'RSS_FN_STOCK' },
+    { name: '파이낸셜뉴스 금융', url: 'http://www.fnnews.com/rss/fn_realnews_finance.xml', sourceTag: 'RSS_FN_FINANCE' },
+    // 헤럴드경제 (증권)
+    { name: '헤럴드경제 증권', url: 'http://biz.heraldm.com/rss/010106000000.xml', sourceTag: 'RSS_HERALD_STOCK' },
+    // 연합뉴스 경제
     { name: '연합뉴스 경제', url: 'https://www.yna.co.kr/rss/economy.xml', sourceTag: 'RSS_YONHAP' },
-    { name: '이데일리', url: 'https://rss.edaily.co.kr/edaily_news.xml', sourceTag: 'RSS_EDAILY' },
-    { name: '매일경제', url: 'https://www.mk.co.kr/rss/30000001/', sourceTag: 'RSS_MAEKYUNG' },
-    { name: '한국경제', url: 'https://www.hankyung.com/feed/stock', sourceTag: 'RSS_HANKYUNG' },
-    { name: '서울경제', url: 'https://www.sedaily.com/RSS/Economy', sourceTag: 'RSS_SEDAILY' },
-    { name: '뉴시스 경제', url: 'https://newsis.com/RSS/economy.xml', sourceTag: 'RSS_NEWSIS' },
-    { name: '인포스탁 데일리', url: 'https://www.infostockdaily.co.kr/rss/allArticle.xml', sourceTag: 'RSS_INFOSTOCK' },
-    { name: '이투데이', url: 'https://www.etoday.co.kr/rss/economy.xml', sourceTag: 'RSS_ETODAY' },
-    { name: '머니투데이', url: 'https://rss.mt.co.kr/mt_stock.xml', sourceTag: 'RSS_MONEYTODAY' },
+    // 머니투데이 주식
+    { name: '머니투데이 주식', url: 'https://rss.mt.co.kr/mt_stock.xml', sourceTag: 'RSS_MONEYTODAY' },
+    // 이투데이 경제
+    { name: '이투데이 경제', url: 'https://www.etoday.co.kr/rss/economy.xml', sourceTag: 'RSS_ETODAY' },
   ];
 
   /**

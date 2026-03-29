@@ -55,6 +55,7 @@
 | DB | PostgreSQL 17 + TimescaleDB |
 | Cache | Redis 8 |
 | 증권API | 한국투자증권 OpenAPI |
+| 뉴스 | RSS 피드 11개 (한경, 매경, 파이낸셜, 헤럴드, 연합, 머니투데이 등) |
 | CI/CD | GitHub Actions |
 | 배포 | Vercel (프론트) + Docker + Cloudflare Tunnel (백엔드) |
 
@@ -106,7 +107,8 @@ stock-monitoring-dashboard/
 - Node.js 22 LTS
 - pnpm 9+
 - Docker & Docker Compose
-- API 키: 한국투자증권, Naver Developer, DART, Anthropic (또는 OpenAI)
+- API 키: 한국투자증권, Anthropic (또는 OpenAI)
+- 선택: DART API 키, Naver Developer (RSS 피드로 대체 가능)
 
 ### 로컬 개발
 

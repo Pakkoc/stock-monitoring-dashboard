@@ -63,20 +63,26 @@ export class NewsCollectorService {
 
   /**
    * Collect news from Naver Search API for active stocks in watchlists.
-   * Queries by stock name to find recent articles.
+   * OPTIONAL: Only runs if NAVER_CLIENT_ID is configured in .env.
+   * MVP에서는 RSS 피드만으로 충분하므로 Naver API 없이도 동작합니다.
    */
   private async collectFromNaver(): Promise<number> {
+    const naverClientId = process.env.NAVER_CLIENT_ID;
+    if (!naverClientId) {
+      this.logger.debug('Naver API not configured, skipping (RSS feeds are primary source)');
+      return 0;
+    }
+
     let newCount = 0;
 
     try {
-      // Get stocks that are actively watched (in at least one watchlist)
       const watchedStocks = await this.prisma.stock.findMany({
         where: {
           isActive: true,
           watchlistItems: { some: {} },
         },
         select: { id: true, symbol: true, name: true },
-        take: 50, // Limit to prevent API quota exhaustion
+        take: 50,
       });
 
       for (const stock of watchedStocks) {
@@ -88,7 +94,6 @@ export class NewsCollectorService {
           });
 
           if (!existing) {
-            // Calculate relevance score
             const relevanceScore = this.calculateRelevance(result.title, result.summary, stock.name, stock.symbol);
 
             await this.newsService.createNews({
@@ -103,7 +108,6 @@ export class NewsCollectorService {
           }
         }
 
-        // Rate limiting: small delay between Naver API calls
         await this.sleep(200);
       }
     } catch (error) {

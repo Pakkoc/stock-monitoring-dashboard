@@ -44,12 +44,15 @@
 
 ### API 키 준비
 
-| API | 발급처 | 환경변수 |
-|-----|--------|----------|
-| KIS (한국투자증권) | https://apiportal.koreainvestment.com | `KIS_APP_KEY`, `KIS_APP_SECRET` |
-| Naver Search | https://developers.naver.com | `NAVER_CLIENT_ID`, `NAVER_CLIENT_SECRET` |
-| DART (전자공시) | https://opendart.fss.or.kr | `DART_API_KEY` |
-| Anthropic (Claude) | https://console.anthropic.com | `ANTHROPIC_API_KEY` |
+| API | 발급처 | 환경변수 | 필수 여부 |
+|-----|--------|----------|----------|
+| KIS (한국투자증권) | https://apiportal.koreainvestment.com | `KIS_APP_KEY`, `KIS_APP_SECRET` | **필수** |
+| Anthropic (Claude) | https://console.anthropic.com | `ANTHROPIC_API_KEY` | **필수** (AI 분석) |
+| DART (전자공시) | https://opendart.fss.or.kr | `DART_API_KEY` | 선택 |
+| Naver Search | https://developers.naver.com | `NAVER_CLIENT_ID` | 선택 (RSS로 대체) |
+
+> **뉴스 수집**: 11개 무료 RSS 피드(한경, 매경, 파이낸셜뉴스, 헤럴드경제 등)가 기본 탑재되어 있어
+> Naver API 없이도 뉴스 기능이 동작합니다.
 
 ### 미니PC 최소 사양
 
