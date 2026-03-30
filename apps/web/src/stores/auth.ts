@@ -45,7 +45,8 @@ export const useAuthStore = create<AuthState>()(
 
       login: (user, token) => {
         set({ user, token });
-        // Also store token separately for socket auth
+        // Store token in cookie for middleware auth check
+        document.cookie = `auth-token=${token}; path=/; max-age=${60 * 60 * 24}; SameSite=Lax`;
         try {
           localStorage.setItem('auth-token', token);
         } catch {
@@ -55,6 +56,8 @@ export const useAuthStore = create<AuthState>()(
 
       logout: () => {
         set({ user: null, token: null });
+        // Clear cookie
+        document.cookie = 'auth-token=; path=/; max-age=0';
         try {
           localStorage.removeItem('auth-token');
         } catch {
