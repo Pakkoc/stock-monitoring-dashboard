@@ -6,13 +6,17 @@ import {
   Logger,
 } from '@nestjs/common';
 import { PrismaService } from '../../shared/database/prisma.service';
+import { RedisService } from '../../shared/redis/redis.service';
 import type { CreateWatchlistDto, UpdateWatchlistDto, AddWatchlistItemDto } from './dto/create-watchlist.dto';
 
 @Injectable()
 export class WatchlistService {
   private readonly logger = new Logger(WatchlistService.name);
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly redis: RedisService,
+  ) {}
 
   /**
    * Get all watchlists for a user, with item counts.
@@ -120,26 +124,33 @@ export class WatchlistService {
       },
     });
 
-    // Fetch latest prices for all stocks in one query
-    const symbols = items.map((item) => item.stock.symbol);
-    const latestPrices = await this.getLatestPricesForSymbols(symbols);
-
+    // Fetch latest prices from Redis cache (populated by polling service)
     return {
-      data: items.map((item) => {
-        const price = latestPrices.get(item.stock.symbol);
+      data: await Promise.all(items.map(async (item) => {
+        let currentPrice = 0, changeRate = 0, volume = 0, tradeValue = 0;
+        try {
+          const cached = await this.redis.get(`stock:price:${item.stock.symbol}`);
+          if (cached) {
+            const p = JSON.parse(cached);
+            currentPrice = p.currentPrice || 0;
+            changeRate = p.changeRate || 0;
+            volume = p.accumulatedVolume || 0;
+            tradeValue = p.accumulatedTradeValue || 0;
+          }
+        } catch { /* ignore */ }
         return {
           id: item.id,
           stockId: item.stock.id,
           symbol: item.stock.symbol,
           name: item.stock.name,
           market: item.stock.market,
-          currentPrice: price ? Number(price.close) : 0,
-          changeRate: price?.changeRate ? Number(price.changeRate) : 0,
-          volume: price ? Number(price.volume) : 0,
-          tradeValue: price ? Number(price.tradeValue) : 0,
+          currentPrice,
+          changeRate,
+          volume,
+          tradeValue,
           addedAt: item.addedAt.toISOString(),
         };
-      }),
+      })),
     };
   }
 
