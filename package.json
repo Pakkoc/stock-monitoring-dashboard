@@ -23,10 +23,11 @@
     "backup": "bash scripts/backup.sh"
   },
   "devDependencies": {
-    "turbo": "^2.4.0",
+    "@changesets/cli": "^2.27.12",
     "prettier": "^3.4.2",
     "prettier-plugin-tailwindcss": "^0.6.11",
-    "@changesets/cli": "^2.27.12"
+    "turbo": "^2.4.0",
+    "typescript": "^5.7.3"
   },
   "packageManager": "pnpm@9.15.4",
   "engines": {

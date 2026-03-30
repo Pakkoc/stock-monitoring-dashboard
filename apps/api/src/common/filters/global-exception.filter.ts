@@ -24,15 +24,20 @@ export class GlobalExceptionFilter implements ExceptionFilter {
     let status: number;
     let message: string;
     let error: string;
+    let errors: unknown[] | undefined;
 
     if (exception instanceof HttpException) {
       status = exception.getStatus();
       const exceptionResponse = exception.getResponse();
-      message =
-        typeof exceptionResponse === 'string'
-          ? exceptionResponse
-          : (exceptionResponse as Record<string, unknown>).message as string ||
-            exception.message;
+      if (typeof exceptionResponse === 'string') {
+        message = exceptionResponse;
+      } else {
+        const resp = exceptionResponse as Record<string, unknown>;
+        message = (resp.message as string) || exception.message;
+        if (Array.isArray(resp.errors)) {
+          errors = resp.errors;
+        }
+      }
       error = exception.name;
     } else if (exception instanceof Error) {
       status = HttpStatus.INTERNAL_SERVER_ERROR;
@@ -52,13 +57,17 @@ export class GlobalExceptionFilter implements ExceptionFilter {
       this.logger.error('Unknown exception type', exception);
     }
 
-    const errorResponse = {
+    const errorResponse: Record<string, unknown> = {
       statusCode: status,
       error,
       message,
       timestamp: new Date().toISOString(),
       path: request.url,
     };
+
+    if (errors) {
+      errorResponse.errors = errors;
+    }
 
     response.status(status).json(errorResponse);
   }
