@@ -19,7 +19,7 @@ import { VolumeDisplay } from '@/components/ui/NumberFormat';
 import { useTopVolumeStocks } from '@/hooks/useStocks';
 import { useDashboardStore } from '@/stores/dashboard';
 import { useRealtimeStore } from '@/stores/realtime';
-import { apiGet, apiPost } from '@/lib/api';
+import { apiGet, apiPost, apiDelete } from '@/lib/api';
 
 type MarketFilter = 'all' | 'kospi' | 'kosdaq';
 
@@ -48,9 +48,8 @@ export function TopVolumeWidget({ limit = 10 }: TopVolumeWidgetProps) {
     })();
   }, []);
 
-  const handleAddToWatchlist = useCallback(async (e: React.MouseEvent, id: number, symbol: string) => {
+  const handleToggleWatchlist = useCallback(async (e: React.MouseEvent, id: number, symbol: string) => {
     e.stopPropagation();
-    if (addedSymbols.has(symbol)) return;
 
     try {
       // Get existing watchlists
@@ -61,15 +60,21 @@ export function TopVolumeWidget({ limit = 10 }: TopVolumeWidgetProps) {
       if (watchlists.length > 0) {
         watchlistId = watchlists[0]!.id;
       } else {
-        // Create default watchlist
         const created = await apiPost<{ data: { id: string } }>('/watchlists', { name: '내 관심종목' });
         watchlistId = created.data.id;
       }
 
-      await apiPost(`/watchlists/${watchlistId}/items`, { stockId: id });
-      setAddedSymbols((prev) => new Set(prev).add(symbol));
+      if (addedSymbols.has(symbol)) {
+        // Remove from watchlist
+        await apiDelete(`/watchlists/${watchlistId}/items/${id}`);
+        setAddedSymbols((prev) => { const next = new Set(prev); next.delete(symbol); return next; });
+      } else {
+        // Add to watchlist
+        await apiPost(`/watchlists/${watchlistId}/items`, { stockId: id });
+        setAddedSymbols((prev) => new Set(prev).add(symbol));
+      }
     } catch {
-      // Silently fail — user may not be logged in
+      // Silently fail
     }
   }, [addedSymbols]);
 
@@ -172,9 +177,9 @@ export function TopVolumeWidget({ limit = 10 }: TopVolumeWidgetProps) {
                     </td>
                     <td className="py-1.5 text-center">
                       <button
-                        onClick={(e) => handleAddToWatchlist(e, stock.id, stock.symbol)}
+                        onClick={(e) => handleToggleWatchlist(e, stock.id, stock.symbol)}
                         className="inline-flex items-center justify-center rounded p-0.5 transition-colors hover:bg-accent"
-                        title="관심종목 추가"
+                        title={addedSymbols.has(stock.symbol) ? '관심종목 해제' : '관심종목 추가'}
                       >
                         <Star
                           size={14}
