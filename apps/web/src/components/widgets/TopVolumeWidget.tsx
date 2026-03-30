@@ -9,7 +9,7 @@
  * - Click row to set active stock
  * - Polling refresh every 10s
  */
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Trophy, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WidgetWrapper } from './WidgetWrapper';
@@ -33,6 +33,20 @@ export function TopVolumeWidget({ limit = 10 }: TopVolumeWidgetProps) {
   const setActiveSymbol = useDashboardStore((s) => s.setActiveSymbol);
   const activeSymbol = useDashboardStore((s) => s.activeSymbol);
   const prices = useRealtimeStore((s) => s.prices);
+
+  // Load existing watchlist symbols on mount
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await apiGet<{ data: { id: number }[] }>('/watchlists');
+        const lists = res?.data ?? [];
+        if (lists.length === 0) return;
+        const items = await apiGet<{ data: { symbol: string }[] }>(`/watchlists/${lists[0]!.id}/items`);
+        const symbols = new Set((items?.data ?? []).map((i) => i.symbol));
+        if (symbols.size > 0) setAddedSymbols(symbols);
+      } catch { /* not logged in */ }
+    })();
+  }, []);
 
   const handleAddToWatchlist = useCallback(async (e: React.MouseEvent, id: number, symbol: string) => {
     e.stopPropagation();
