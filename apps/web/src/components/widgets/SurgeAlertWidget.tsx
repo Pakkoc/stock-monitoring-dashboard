@@ -7,18 +7,22 @@
  * - Real-time alerts from WebSocket via realtime store
  * - Red highlight animation for new alerts
  * - Shows stock name, change %, time detected
+ * - Inline surge cause summary (rule-based, no AI)
+ * - Confidence badge and news link when available
+ * - Theme tag when theme co-movement detected
  * - Click to select stock
  */
 import { useMemo } from 'react';
-import { AlertTriangle, Zap } from 'lucide-react';
+import { AlertTriangle, Zap, ExternalLink } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WidgetWrapper } from './WidgetWrapper';
 import { ChangeRate } from '@/components/ui/ChangeRate';
 import { StockPrice } from '@/components/ui/StockPrice';
 import { useSurgeAlerts } from '@/hooks/useSurgeAlerts';
+import { useSurgeCauses } from '@/hooks/useSurgeCauses';
 import { useRealtimeStore } from '@/stores/realtime';
 import { useDashboardStore } from '@/stores/dashboard';
-import type { StockSurgePayload } from '@stock-dashboard/shared';
+import type { StockSurgePayload, SurgeCauseResult } from '@stock-dashboard/shared';
 
 interface SurgeAlertWidgetProps {
   maxAlerts?: number;
@@ -48,10 +52,42 @@ function getCategoryLabel(category: string): string {
   return map[category] ?? category;
 }
 
+/** Confidence badge color */
+function getConfidenceBadge(confidence: SurgeCauseResult['confidence']): {
+  label: string;
+  className: string;
+} {
+  switch (confidence) {
+    case 'high':
+      return { label: '높음', className: 'bg-green-500/20 text-green-400' };
+    case 'medium':
+      return { label: '보통', className: 'bg-yellow-500/20 text-yellow-400' };
+    case 'low':
+      return { label: '낮음', className: 'bg-red-500/20 text-red-400' };
+    default:
+      return { label: '', className: '' };
+  }
+}
+
 export function SurgeAlertWidget({ maxAlerts = 20 }: SurgeAlertWidgetProps) {
   const { data: restAlerts, isLoading, error } = useSurgeAlerts();
+  const { data: causesData } = useSurgeCauses();
   const realtimeAlerts = useRealtimeStore((s) => s.surgeAlerts);
   const setActiveSymbol = useDashboardStore((s) => s.setActiveSymbol);
+
+  // Build a Map from symbol → cause for O(1) lookup
+  const causesBySymbol = useMemo(() => {
+    const map = new Map<string, SurgeCauseResult>();
+    if (causesData?.data) {
+      for (const cause of causesData.data) {
+        // Keep the most recent cause per symbol
+        if (!map.has(cause.symbol)) {
+          map.set(cause.symbol, cause);
+        }
+      }
+    }
+    return map;
+  }, [causesData]);
 
   // Merge REST and WebSocket alerts, preferring realtime (newer first)
   const alerts = useMemo(() => {
@@ -93,6 +129,7 @@ export function SurgeAlertWidget({ maxAlerts = 20 }: SurgeAlertWidgetProps) {
           <SurgeAlertItem
             key={`${alert.symbol}-${new Date(alert.timestamp).getTime()}`}
             alert={alert}
+            cause={causesBySymbol.get(alert.symbol) ?? null}
             isNew={index < realtimeAlerts.length && index < 3}
             onClick={() => setActiveSymbol(alert.symbol)}
           />
@@ -106,11 +143,14 @@ export function SurgeAlertWidget({ maxAlerts = 20 }: SurgeAlertWidgetProps) {
 
 interface SurgeAlertItemProps {
   alert: StockSurgePayload;
+  cause: SurgeCauseResult | null;
   isNew: boolean;
   onClick: () => void;
 }
 
-function SurgeAlertItem({ alert, isNew, onClick }: SurgeAlertItemProps) {
+function SurgeAlertItem({ alert, cause, isNew, onClick }: SurgeAlertItemProps) {
+  const confidenceBadge = cause ? getConfidenceBadge(cause.confidence) : null;
+
   return (
     <button
       onClick={onClick}
@@ -135,6 +175,50 @@ function SurgeAlertItem({ alert, isNew, onClick }: SurgeAlertItemProps) {
           </span>
           <span>{formatAlertTime(alert.timestamp)}</span>
         </div>
+
+        {/* Surge Cause Summary (rule-based analysis) */}
+        {cause && (
+          <div className="mt-1 space-y-0.5">
+            <div className="flex items-start gap-1.5">
+              <span className="text-xs leading-relaxed text-foreground/80">
+                {cause.cause}
+              </span>
+            </div>
+            <div className="flex flex-wrap items-center gap-1.5">
+              {/* Confidence badge */}
+              {confidenceBadge && (
+                <span
+                  className={cn(
+                    'rounded px-1 py-0.5 text-[10px] font-medium',
+                    confidenceBadge.className,
+                  )}
+                >
+                  {confidenceBadge.label}
+                </span>
+              )}
+              {/* Theme tag */}
+              {cause.themeName && (
+                <span className="rounded bg-blue-500/20 px-1 py-0.5 text-[10px] text-blue-400">
+                  {cause.themeName}
+                </span>
+              )}
+              {/* News link */}
+              {cause.newsUrl && (
+                <a
+                  href={cause.newsUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="inline-flex items-center gap-0.5 text-[10px] text-blue-400 hover:text-blue-300 hover:underline"
+                >
+                  <ExternalLink size={9} />
+                  <span>뉴스</span>
+                </a>
+              )}
+            </div>
+          </div>
+        )}
+
         <StockPrice
           price={alert.currentPrice}
           size="sm"

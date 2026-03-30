@@ -14,6 +14,7 @@ import {
   type RealtimePrice,
 } from './stock-polling.service';
 import { StockQueueService } from './stock-queue.service';
+import { SurgeCauseService } from './surge-cause.service';
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -79,6 +80,7 @@ export class StockDataPipelineService implements OnModuleInit, OnModuleDestroy {
     private readonly gateway: StockGateway,
     private readonly queueService: StockQueueService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly surgeCauseService: SurgeCauseService,
   ) {
     this.surgeThresholdModerate = this.config.get<number>(
       'SURGE_THRESHOLD_MODERATE',
@@ -359,6 +361,9 @@ export class StockDataPipelineService implements OnModuleInit, OnModuleDestroy {
 
     // Enqueue for AI analysis
     void this.queueService.enqueueSurgeDetection(surgeEvent);
+
+    // Run rule-based surge cause analysis (async, non-blocking)
+    void this.surgeCauseService.analyzeSurgeCause(price.symbol, price.changeRate);
 
     // Emit local event for other modules
     this.eventEmitter.emit('stock.surge', surgeEvent);

@@ -121,6 +121,8 @@ export class NewsCollectorService {
 
   /**
    * Collect news from all configured RSS feeds.
+   * After saving each new article, auto-links it to matching stocks
+   * by keyword matching on the title (stock name / symbol).
    */
   private async collectFromRss(): Promise<number> {
     let newCount = 0;
@@ -128,19 +130,40 @@ export class NewsCollectorService {
     try {
       const feedItems = await this.rssFeed.fetchFeeds();
 
+      // Load all active stocks once for keyword matching
+      const activeStocks = await this.prisma.stock.findMany({
+        where: { isActive: true },
+        select: { id: true, symbol: true, name: true },
+      });
+
       for (const item of feedItems) {
         const existing = await this.prisma.news.findUnique({
           where: { url: item.url },
         });
 
         if (!existing) {
+          // Find matching stocks by keyword in title
+          const matchedStocks = this.matchStocksToNews(
+            item.title,
+            item.summary ?? '',
+            activeStocks,
+          );
+
           await this.newsService.createNews({
             title: item.title,
             url: item.url,
             source: item.source,
             summary: item.summary,
             publishedAt: item.publishedAt,
+            stockIds: matchedStocks.length > 0 ? matchedStocks : undefined,
           });
+
+          if (matchedStocks.length > 0) {
+            this.logger.debug(
+              `RSS news linked to ${matchedStocks.length} stock(s): "${item.title.slice(0, 50)}"`,
+            );
+          }
+
           newCount++;
         }
       }
@@ -151,6 +174,28 @@ export class NewsCollectorService {
     }
 
     return newCount;
+  }
+
+  /**
+   * Match a news article to stocks by keyword matching.
+   * Checks if the stock's name or symbol appears in the title or summary.
+   * Returns stock IDs with relevance scores for the news_stocks pivot table.
+   */
+  private matchStocksToNews(
+    title: string,
+    summary: string,
+    stocks: Array<{ id: number; symbol: string; name: string }>,
+  ): Array<{ stockId: number; relevanceScore: number }> {
+    const matched: Array<{ stockId: number; relevanceScore: number }> = [];
+
+    for (const stock of stocks) {
+      const score = this.calculateRelevance(title, summary, stock.name, stock.symbol);
+      if (score > 0) {
+        matched.push({ stockId: stock.id, relevanceScore: score });
+      }
+    }
+
+    return matched;
   }
 
   /**

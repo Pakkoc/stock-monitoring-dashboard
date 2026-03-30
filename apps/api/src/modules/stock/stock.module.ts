@@ -7,6 +7,7 @@ import { KiwoomApiService } from './services/kiwoom-api.service';
 import { StockPollingService } from './services/stock-polling.service';
 import { StockDataPipelineService } from './services/stock-data-pipeline.service';
 import { StockQueueService } from './services/stock-queue.service';
+import { SurgeCauseService } from './services/surge-cause.service';
 
 /**
  * StockModule — Real-time stock price data and market indices.
@@ -45,7 +46,10 @@ import { StockQueueService } from './services/stock-queue.service';
 
     // Data pipeline (depends on all above)
     StockDataPipelineService,
+
+    // Surge cause analysis (rule-based, no AI)
+    SurgeCauseService,
   ],
-  exports: [StockService, StockGateway, KiwoomApiService],
+  exports: [StockService, StockGateway, KiwoomApiService, SurgeCauseService],
 })
 export class StockModule {}

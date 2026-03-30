@@ -53,6 +53,7 @@ export const queryKeys = {
     all: ['alerts'] as const,
     active: () => ['alerts', 'active'] as const,
     surge: () => ['alerts', 'surge'] as const,
+    surgeCauses: () => ['alerts', 'surge-causes'] as const,
   },
 
   admin: {

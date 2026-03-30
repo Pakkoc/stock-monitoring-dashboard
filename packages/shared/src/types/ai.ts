@@ -66,3 +66,16 @@ export interface AnalysisSource {
   title: string | null;
   fetchedAt: Date;
 }
+
+/** Rule-based surge cause analysis result (no AI, cost 0) */
+export interface SurgeCauseResult {
+  symbol: string;
+  changeRate: number;
+  cause: string;
+  category: 'news' | 'theme' | 'technical' | 'unknown';
+  confidence: 'high' | 'medium' | 'low';
+  newsTitle: string | null;
+  newsUrl: string | null;
+  themeName: string | null;
+  analyzedAt: string;
+}
