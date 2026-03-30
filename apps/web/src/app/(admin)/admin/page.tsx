@@ -14,7 +14,6 @@ import {
   Database,
   Server,
   Wifi,
-  WifiOff,
   Users,
   Settings,
   Activity,
