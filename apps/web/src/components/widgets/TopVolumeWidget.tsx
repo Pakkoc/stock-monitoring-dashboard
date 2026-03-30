@@ -9,8 +9,8 @@
  * - Click row to set active stock
  * - Polling refresh every 10s
  */
-import { useState, useMemo } from 'react';
-import { Trophy } from 'lucide-react';
+import { useState, useMemo, useCallback } from 'react';
+import { Trophy, Star } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WidgetWrapper } from './WidgetWrapper';
 import { StockPrice } from '@/components/ui/StockPrice';
@@ -19,6 +19,7 @@ import { VolumeDisplay } from '@/components/ui/NumberFormat';
 import { useTopVolumeStocks } from '@/hooks/useStocks';
 import { useDashboardStore } from '@/stores/dashboard';
 import { useRealtimeStore } from '@/stores/realtime';
+import { apiGet, apiPost } from '@/lib/api';
 
 type MarketFilter = 'all' | 'kospi' | 'kosdaq';
 
@@ -28,9 +29,34 @@ interface TopVolumeWidgetProps {
 
 export function TopVolumeWidget({ limit = 10 }: TopVolumeWidgetProps) {
   const [marketFilter, setMarketFilter] = useState<MarketFilter>('all');
+  const [addedSymbols, setAddedSymbols] = useState<Set<string>>(new Set());
   const setActiveSymbol = useDashboardStore((s) => s.setActiveSymbol);
   const activeSymbol = useDashboardStore((s) => s.activeSymbol);
   const prices = useRealtimeStore((s) => s.prices);
+
+  const handleAddToWatchlist = useCallback(async (e: React.MouseEvent, symbol: string) => {
+    e.stopPropagation();
+    if (addedSymbols.has(symbol)) return;
+
+    try {
+      // Get existing watchlists
+      const res = await apiGet<{ watchlists: { id: string; name: string }[] }>('/watchlists');
+      let watchlistId: string;
+
+      if (res.watchlists.length > 0) {
+        watchlistId = res.watchlists[0].id;
+      } else {
+        // Create default watchlist
+        const created = await apiPost<{ id: string }>('/watchlists', { name: '내 관심종목' });
+        watchlistId = created.id;
+      }
+
+      await apiPost(`/watchlists/${watchlistId}/stocks`, { symbol });
+      setAddedSymbols((prev) => new Set(prev).add(symbol));
+    } catch {
+      // Silently fail — user may not be logged in
+    }
+  }, [addedSymbols]);
 
   const filterParam =
     marketFilter === 'all' ? undefined : marketFilter;
@@ -90,6 +116,7 @@ export function TopVolumeWidget({ limit = 10 }: TopVolumeWidgetProps) {
                 <th className="py-1.5 text-right font-medium">현재가</th>
                 <th className="py-1.5 text-right font-medium">등락률</th>
                 <th className="py-1.5 text-right font-medium">거래량</th>
+                <th className="w-8 py-1.5 text-center font-medium"></th>
               </tr>
             </thead>
             <tbody>
@@ -128,6 +155,23 @@ export function TopVolumeWidget({ limit = 10 }: TopVolumeWidgetProps) {
                     <td className="py-1.5 text-right">
                       <VolumeDisplay value={volume} abbreviated />
                     </td>
+                    <td className="py-1.5 text-center">
+                      <button
+                        onClick={(e) => handleAddToWatchlist(e, stock.symbol)}
+                        className="inline-flex items-center justify-center rounded p-0.5 transition-colors hover:bg-accent"
+                        title="관심종목 추가"
+                      >
+                        <Star
+                          size={14}
+                          className={cn(
+                            'transition-colors',
+                            addedSymbols.has(stock.symbol)
+                              ? 'fill-yellow-400 text-yellow-400'
+                              : 'text-muted-foreground hover:text-yellow-400',
+                          )}
+                        />
+                      </button>
+                    </td>
                   </tr>
                 );
               })}
@@ -135,7 +179,7 @@ export function TopVolumeWidget({ limit = 10 }: TopVolumeWidgetProps) {
               {stocks.length === 0 && (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={6}
                     className="py-8 text-center text-sm text-muted-foreground"
                   >
                     <Trophy size={20} className="mx-auto mb-1" />

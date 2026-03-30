@@ -10,7 +10,6 @@ export type WidgetType =
   | 'newsFeed'
   | 'themeSummary'
   | 'surgeAlerts'
-  | 'aiAnalysis'
   | 'marketIndices'
   | 'topVolume';
 
@@ -71,15 +70,6 @@ export const WIDGET_CONFIGS: Record<WidgetType, WidgetConfig> = {
     defaultH: 4,
     minW: 2,
     minH: 3,
-  },
-  aiAnalysis: {
-    type: 'aiAnalysis',
-    title: 'AI 분석',
-    description: 'AI 기반 급등 원인 분석',
-    defaultW: 4,
-    defaultH: 6,
-    minW: 3,
-    minH: 4,
   },
   marketIndices: {
     type: 'marketIndices',

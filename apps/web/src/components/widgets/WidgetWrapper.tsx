@@ -13,7 +13,7 @@ import { useDashboardStore } from '@/stores/dashboard';
 import type { WidgetType } from '@/lib/widget-configs';
 
 interface WidgetWrapperProps {
-  widgetId: WidgetType;
+  widgetId: string;
   title: string;
   children: ReactNode;
   /** Additional header actions to render between title and control buttons */
@@ -33,7 +33,7 @@ export function WidgetWrapper({
   const removeWidget = useDashboardStore((s) => s.removeWidget);
 
   const handleRemove = useCallback(() => {
-    removeWidget(widgetId);
+    removeWidget(widgetId as WidgetType);
   }, [removeWidget, widgetId]);
 
   const handleToggleMinimize = useCallback(() => {

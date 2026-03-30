@@ -26,7 +26,6 @@ import { CandlestickChartWidget } from '@/components/widgets/CandlestickChartWid
 import { NewsFeedWidget } from '@/components/widgets/NewsFeedWidget';
 import { ThemeSummaryWidget } from '@/components/widgets/ThemeSummaryWidget';
 import { SurgeAlertWidget } from '@/components/widgets/SurgeAlertWidget';
-import { AiAnalysisWidget } from '@/components/widgets/AiAnalysisWidget';
 import { MarketIndicesWidget } from '@/components/widgets/MarketIndicesWidget';
 import { TopVolumeWidget } from '@/components/widgets/TopVolumeWidget';
 
@@ -42,7 +41,6 @@ const WIDGET_COMPONENTS: Record<WidgetType, React.ComponentType> = {
   newsFeed: NewsFeedWidget,
   themeSummary: ThemeSummaryWidget,
   surgeAlerts: SurgeAlertWidget,
-  aiAnalysis: AiAnalysisWidget,
   marketIndices: MarketIndicesWidget,
   topVolume: TopVolumeWidget,
 };
@@ -92,7 +90,7 @@ export default function DashboardPage() {
             containerPadding={GRID_CONFIG.containerPadding}
             compactType={GRID_CONFIG.compactType}
             preventCollision={GRID_CONFIG.preventCollision}
-            isResizable={isEditMode && GRID_CONFIG.isResizable}
+            isResizable={GRID_CONFIG.isResizable}
             isDraggable={isEditMode && GRID_CONFIG.isDraggable}
             draggableHandle={GRID_CONFIG.draggableHandle}
             resizeHandles={[...GRID_CONFIG.resizeHandles]}
