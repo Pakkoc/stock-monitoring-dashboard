@@ -29,42 +29,34 @@ export function ThemeSummaryWidget({ limit = 10 }: ThemeSummaryWidgetProps) {
 
   return (
     <WidgetWrapper widgetId="themeSummary" title="테마 요약">
-      {isLoading && (
+      {isLoading && themes.length === 0 && (
         <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
           테마 로딩 중...
         </div>
       )}
 
-      {error && (
-        <div className="flex h-full items-center justify-center text-sm text-destructive">
-          테마 데이터를 불러올 수 없습니다
-        </div>
-      )}
+      <div className="space-y-1.5">
+        {themes.map((theme) => (
+          <ThemeCard
+            key={theme.themeId}
+            theme={theme}
+            isExpanded={expandedTheme === theme.themeId}
+            onToggle={() =>
+              setExpandedTheme(
+                expandedTheme === theme.themeId ? null : theme.themeId,
+              )
+            }
+            onStockClick={setActiveSymbol}
+          />
+        ))}
 
-      {!isLoading && !error && (
-        <div className="space-y-1.5">
-          {themes.map((theme) => (
-            <ThemeCard
-              key={theme.themeId}
-              theme={theme}
-              isExpanded={expandedTheme === theme.themeId}
-              onToggle={() =>
-                setExpandedTheme(
-                  expandedTheme === theme.themeId ? null : theme.themeId,
-                )
-              }
-              onStockClick={setActiveSymbol}
-            />
-          ))}
-
-          {themes.length === 0 && (
-            <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
-              <TrendingUp size={24} className="mb-2" />
-              <span className="text-sm">테마 데이터가 없습니다</span>
-            </div>
-          )}
-        </div>
-      )}
+        {!isLoading && themes.length === 0 && (
+          <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
+            <TrendingUp size={24} className="mb-2" />
+            <span className="text-sm">데이터 없음</span>
+          </div>
+        )}
+      </div>
     </WidgetWrapper>
   );
 }

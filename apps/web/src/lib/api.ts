@@ -25,6 +25,24 @@ export interface ApiResponse<T> {
 }
 
 /**
+ * Retrieve the auth token from localStorage (Zustand persist store).
+ * Returns null if no token is found or if running on the server.
+ */
+function getAuthToken(): string | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    // Zustand persist stores data under the key 'smd-auth'
+    const raw = localStorage.getItem('smd-auth');
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    // Zustand persist wraps the partialised state in { state: { ... } }
+    return parsed?.state?.token ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Generic fetch wrapper with error handling.
  */
 async function apiFetch<T>(
@@ -33,12 +51,20 @@ async function apiFetch<T>(
 ): Promise<T> {
   const url = `${API_BASE_URL}/api${endpoint}`;
 
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+    ...(options?.headers as Record<string, string>),
+  };
+
+  // Attach auth token if available
+  const token = getAuthToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+
   const response = await fetch(url, {
     ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      ...options?.headers,
-    },
+    headers,
     credentials: 'include',
   });
 

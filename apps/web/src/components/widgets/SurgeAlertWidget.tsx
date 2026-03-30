@@ -49,7 +49,7 @@ function getCategoryLabel(category: string): string {
 }
 
 export function SurgeAlertWidget({ maxAlerts = 20 }: SurgeAlertWidgetProps) {
-  const { data: restAlerts, isLoading } = useSurgeAlerts();
+  const { data: restAlerts, isLoading, error } = useSurgeAlerts();
   const realtimeAlerts = useRealtimeStore((s) => s.surgeAlerts);
   const setActiveSymbol = useDashboardStore((s) => s.setActiveSymbol);
 
@@ -82,7 +82,9 @@ export function SurgeAlertWidget({ maxAlerts = 20 }: SurgeAlertWidgetProps) {
       {!isLoading && alerts.length === 0 && (
         <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
           <Zap size={24} className="mb-2" />
-          <span className="text-sm">급등 알림이 없습니다</span>
+          <span className="text-sm">
+            {error ? '데이터 없음' : '급등 알림이 없습니다'}
+          </span>
         </div>
       )}
 

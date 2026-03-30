@@ -17,7 +17,7 @@ interface MarketIndicesResponse {
 export function useMarketIndices() {
   return useQuery({
     queryKey: queryKeys.marketIndices.all,
-    queryFn: () => apiGet<MarketIndicesResponse>('/market-indices'),
+    queryFn: () => apiGet<MarketIndicesResponse>('/stocks/market/indices'),
     staleTime: 5_000,
     gcTime: 5 * 60 * 1000,
   });

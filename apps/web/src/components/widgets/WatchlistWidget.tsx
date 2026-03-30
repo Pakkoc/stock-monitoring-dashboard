@@ -98,8 +98,12 @@ export function WatchlistWidget({ watchlistId }: WatchlistWidgetProps) {
       )}
 
       {error && (
-        <div className="flex h-full items-center justify-center text-sm text-destructive">
-          관심종목을 불러올 수 없습니다
+        <div className="flex h-full flex-col items-center justify-center gap-1 text-sm text-muted-foreground">
+          <span>
+            {(error as { statusCode?: number }).statusCode === 401
+              ? '로그인이 필요합니다'
+              : '관심종목을 불러올 수 없습니다'}
+          </span>
         </div>
       )}
 
