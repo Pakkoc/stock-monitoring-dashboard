@@ -253,15 +253,12 @@ export class AiAgentService implements OnModuleInit {
         data: {
           stockId: stock.id,
           analysisType: 'SURGE',
-          result: result as unknown as Record<string, unknown>,
+          result: JSON.parse(JSON.stringify(result)),
           confidenceScore: result.confidenceScore / 100, // DB stores as 0-1 decimal
           qgL1Pass: result.qualityGate.l1Syntax.passed,
           qgL2Pass: result.qualityGate.l2Semantic.passed,
           qgL3Pass: result.qualityGate.l3Factual.passed,
-          sourcesJson: result.analysis.evidence as unknown as Record<
-            string,
-            unknown
-          >[],
+          sourcesJson: JSON.parse(JSON.stringify(result.analysis.evidence)),
         },
       });
 

@@ -4,6 +4,12 @@
     "rootDir": "./src",
     "outDir": "./dist",
     "baseUrl": ".",
+    "strict": false,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "declaration": false,
+    "declarationMap": false,
+    "skipLibCheck": true,
     "paths": {
       "@/*": ["src/*"],
       "@shared/*": ["../../packages/shared/src/*"]

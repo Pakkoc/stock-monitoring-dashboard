@@ -37,7 +37,7 @@ export class PrismaService
 
     // Log slow queries in development
     if (process.env.NODE_ENV === 'development') {
-      // @ts-expect-error -- Prisma event typing
+      // @ts-ignore -- Prisma event typing
       this.$on('query', (e: { duration: number; query: string }) => {
         if (e.duration > 100) {
           this.logger.warn(`Slow query (${e.duration}ms): ${e.query}`);

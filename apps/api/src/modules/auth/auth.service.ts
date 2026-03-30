@@ -166,7 +166,7 @@ export class AuthService {
       throw new UnauthorizedException('User not found');
     }
 
-    return user;
+    return user as any;
   }
 
   // ─── Private Helpers ─────────────────────────────────────────

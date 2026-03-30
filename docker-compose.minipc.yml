@@ -54,6 +54,8 @@ services:
   postgres:
     image: timescale/timescaledb:latest-pg17
     restart: always
+    ports:
+      - "127.0.0.1:5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
       - ./scripts/db/init:/docker-entrypoint-initdb.d
@@ -109,6 +111,8 @@ services:
   redis:
     image: redis:8-alpine
     restart: always
+    ports:
+      - "127.0.0.1:6379:6379"
     command: >
       redis-server
         --appendonly yes
