@@ -132,9 +132,6 @@ class SocketManager {
     }
 
     if (subscribed.length > 0 && this.socket?.connected) {
-      const newSymbols = subscribed.filter(
-        (s) => !symbols.includes(s) || !this.subscribedSymbols.has(s)
-      );
       // Emit subscription for all requested (server deduplicates)
       this.socket.emit(SOCKET_EVENTS.SUBSCRIBE_STOCK as 'subscribe:stock', {
         symbols: subscribed,

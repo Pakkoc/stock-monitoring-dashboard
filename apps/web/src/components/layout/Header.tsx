@@ -9,7 +9,6 @@ import {
   Wifi,
   WifiOff,
   LayoutGrid,
-  Settings,
   User,
   Edit3,
   RotateCcw,

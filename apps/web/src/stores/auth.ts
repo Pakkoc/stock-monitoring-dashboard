@@ -6,7 +6,7 @@
  */
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
-import type { SessionUser, Role } from '@stock-dashboard/shared';
+import type { SessionUser } from '@stock-dashboard/shared';
 
 interface AuthState {
   /** Currently logged-in user info (null if not authenticated) */

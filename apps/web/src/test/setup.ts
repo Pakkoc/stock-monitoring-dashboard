@@ -110,7 +110,7 @@ class MockIntersectionObserver {
   readonly thresholds: ReadonlyArray<number> = [];
 
   constructor(
-    private callback: IntersectionObserverCallback,
+    _callback: IntersectionObserverCallback,
     _options?: IntersectionObserverInit,
   ) {}
 
@@ -126,7 +126,7 @@ vi.stubGlobal('IntersectionObserver', MockIntersectionObserver);
 // Mock: ResizeObserver (required by react-grid-layout, recharts)
 // ---------------------------------------------------------------------------
 class MockResizeObserver {
-  constructor(private callback: ResizeObserverCallback) {}
+  constructor(_callback: ResizeObserverCallback) {}
 
   observe = vi.fn();
   unobserve = vi.fn();

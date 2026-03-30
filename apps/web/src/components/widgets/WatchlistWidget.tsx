@@ -215,7 +215,7 @@ function SortableHeader({
   label,
   field,
   currentField,
-  currentOrder,
+  currentOrder: _currentOrder,
   onSort,
   align = 'left',
 }: SortableHeaderProps) {

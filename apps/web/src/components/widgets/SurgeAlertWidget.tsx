@@ -10,7 +10,7 @@
  * - Click to select stock
  */
 import { useMemo } from 'react';
-import { AlertTriangle, TrendingUp, Zap } from 'lucide-react';
+import { AlertTriangle, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { WidgetWrapper } from './WidgetWrapper';
 import { ChangeRate } from '@/components/ui/ChangeRate';

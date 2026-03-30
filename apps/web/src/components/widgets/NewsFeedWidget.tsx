@@ -11,7 +11,6 @@
  */
 import { useMemo } from 'react';
 import { ExternalLink, Newspaper } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { WidgetWrapper } from './WidgetWrapper';
 import { useNews } from '@/hooks/useNews';
 import { useDashboardStore } from '@/stores/dashboard';

@@ -11,7 +11,6 @@
  */
 import { useState, useMemo } from 'react';
 import { ChevronDown, ChevronUp, TrendingUp } from 'lucide-react';
-import { cn } from '@/lib/utils';
 import { WidgetWrapper } from './WidgetWrapper';
 import { ChangeRate } from '@/components/ui/ChangeRate';
 import { useThemePerformance, type ThemePerformance } from '@/hooks/useThemes';

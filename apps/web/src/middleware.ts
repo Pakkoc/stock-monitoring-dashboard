@@ -11,9 +11,6 @@ import { NextRequest, NextResponse } from 'next/server';
 /** Paths accessible without authentication */
 const PUBLIC_PATHS = ['/login', '/signup'];
 
-/** Paths that require admin role (validated in layout, not middleware) */
-const ADMIN_PATHS = ['/admin'];
-
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 

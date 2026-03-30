@@ -12,7 +12,7 @@
  *
  * Note: Canvas-based rendering requires browser APIs — loaded client-side only.
  */
-import { useEffect, useRef, useCallback, useState, useMemo } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import {
   createChart,
   type IChartApi,
