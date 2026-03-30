@@ -284,7 +284,7 @@ class SocketManager {
     const cookieMatch = document.cookie.match(
       /better-auth\.session_token=([^;]+)/,
     );
-    if (cookieMatch) return cookieMatch[1];
+    if (cookieMatch) return cookieMatch[1] ?? null;
 
     // Fallback to localStorage token
     try {
