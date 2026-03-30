@@ -11,6 +11,7 @@
  */
 import { useState, useMemo, useCallback, useEffect } from 'react';
 import { Trophy, Star } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { cn } from '@/lib/utils';
 import { WidgetWrapper } from './WidgetWrapper';
 import { StockPrice } from '@/components/ui/StockPrice';
@@ -19,6 +20,7 @@ import { VolumeDisplay } from '@/components/ui/NumberFormat';
 import { useTopVolumeStocks } from '@/hooks/useStocks';
 import { useDashboardStore } from '@/stores/dashboard';
 import { useRealtimeStore } from '@/stores/realtime';
+import { queryKeys } from '@/lib/query-keys';
 import { apiGet, apiPost, apiDelete } from '@/lib/api';
 
 type MarketFilter = 'all' | 'kospi' | 'kosdaq';
@@ -33,6 +35,7 @@ export function TopVolumeWidget({ limit = 10 }: TopVolumeWidgetProps) {
   const setActiveSymbol = useDashboardStore((s) => s.setActiveSymbol);
   const activeSymbol = useDashboardStore((s) => s.activeSymbol);
   const prices = useRealtimeStore((s) => s.prices);
+  const queryClient = useQueryClient();
 
   // Load existing watchlist symbols on mount
   useEffect(() => {
@@ -73,6 +76,8 @@ export function TopVolumeWidget({ limit = 10 }: TopVolumeWidgetProps) {
         await apiPost(`/watchlists/${watchlistId}/items`, { stockId: id });
         setAddedSymbols((prev) => new Set(prev).add(symbol));
       }
+      // Immediately refresh watchlist widget
+      queryClient.invalidateQueries({ queryKey: queryKeys.watchlists.list() });
     } catch {
       // Silently fail
     }
