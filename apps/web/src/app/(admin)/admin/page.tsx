@@ -25,8 +25,6 @@ import {
   Shield,
   Clock,
   BarChart3,
-  ChevronDown,
-  ChevronUp,
 } from 'lucide-react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiGet, apiPost, apiPut } from '@/lib/api';
