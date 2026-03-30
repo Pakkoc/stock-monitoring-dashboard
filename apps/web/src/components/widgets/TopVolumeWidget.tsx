@@ -40,15 +40,16 @@ export function TopVolumeWidget({ limit = 10 }: TopVolumeWidgetProps) {
 
     try {
       // Get existing watchlists
-      const res = await apiGet<{ watchlists: { id: string; name: string }[] }>('/watchlists');
+      const res = await apiGet<{ data: { id: string; name: string }[] }>('/watchlists');
       let watchlistId: string;
+      const watchlists = res?.data ?? [];
 
-      if (res.watchlists.length > 0) {
-        watchlistId = res.watchlists[0].id;
+      if (watchlists.length > 0) {
+        watchlistId = watchlists[0]!.id;
       } else {
         // Create default watchlist
-        const created = await apiPost<{ id: string }>('/watchlists', { name: '내 관심종목' });
-        watchlistId = created.id;
+        const created = await apiPost<{ data: { id: string } }>('/watchlists', { name: '내 관심종목' });
+        watchlistId = created.data.id;
       }
 
       await apiPost(`/watchlists/${watchlistId}/stocks`, { symbol });
