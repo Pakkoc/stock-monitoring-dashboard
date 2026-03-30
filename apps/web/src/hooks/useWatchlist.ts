@@ -33,21 +33,47 @@ export function useWatchlists() {
     queryKey: queryKeys.watchlists.list(),
     queryFn: async (): Promise<WatchlistListResponse> => {
       try {
-        return await apiGet<WatchlistListResponse>('/watchlists');
+        // 1. Get watchlist list
+        const listRes = await apiGet<{ data: { id: number; name: string; itemCount: number }[] }>('/watchlists');
+        const lists = listRes?.data ?? [];
+
+        if (lists.length === 0) return { watchlists: [] };
+
+        // 2. Get items for the first watchlist
+        const firstId = lists[0]!.id;
+        const itemsRes = await apiGet<{ data: { id: number; stockId: number; symbol: string; name: string; market: string; currentPrice: number; changeRate: number; volume: number; addedAt: string }[] }>(
+          `/watchlists/${firstId}/items`,
+        );
+        const items = itemsRes?.data ?? [];
+
+        return {
+          watchlists: [{
+            id: String(firstId),
+            name: lists[0]!.name,
+            stocks: items.map((item) => ({
+              id: item.stockId,
+              symbol: item.symbol,
+              name: item.name,
+              market: item.market as 'KOSPI' | 'KOSDAQ',
+              sector: null,
+              currentPrice: item.currentPrice,
+              changeRate: item.changeRate,
+              volume: item.volume,
+              addedAt: item.addedAt,
+            })),
+          }],
+        };
       } catch (error: unknown) {
         const statusCode =
           error && typeof error === 'object' && 'statusCode' in error
             ? (error as { statusCode: number }).statusCode
             : 0;
-        // On 401, return empty instead of throwing so the widget
-        // shows "관심종목이 없습니다" rather than an error state.
         if (statusCode === 401) {
           return { watchlists: [] };
         }
         throw error;
       }
     },
-    // Only fetch when the user has a token
     enabled: !!token,
     staleTime: 30_000,
     gcTime: 10 * 60 * 1000,
