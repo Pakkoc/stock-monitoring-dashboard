@@ -11,7 +11,7 @@
  * - Error display for invalid credentials
  * - Link to signup page
  */
-import { useState, useCallback, type FormEvent } from 'react';
+import { useState, useCallback, Suspense, type FormEvent } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { z } from 'zod';
@@ -43,6 +43,14 @@ interface FieldErrors {
 }
 
 export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen"><Loader2 className="animate-spin" /></div>}>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
