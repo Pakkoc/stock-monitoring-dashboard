@@ -2,6 +2,7 @@ import { Injectable, NotFoundException, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../../shared/database/prisma.service';
 import { RedisService } from '../../shared/redis/redis.service';
+import { KiwoomApiService } from './services/kiwoom-api.service';
 import { buildPaginationMeta } from '../../common/interfaces/pagination.interface';
 import type { ListStocksDto } from './dto/list-stocks.dto';
 import type { StockPriceQueryDto } from './dto/stock-price-query.dto';
@@ -37,6 +38,7 @@ export class StockService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
+    private readonly kiwoomApi: KiwoomApiService,
   ) {}
 
   /**
@@ -316,14 +318,25 @@ export class StockService {
       return { data: cachedIndices };
     }
 
-    // Fallback: query the latest market index data (stored in a separate mechanism)
-    // In production, this would be populated by the KIS WebSocket market index subscription.
-    return {
-      data: [
-        { market: 'KOSPI' as const, currentValue: 0, changeValue: 0, changeRate: 0, updatedAt: new Date().toISOString() },
-        { market: 'KOSDAQ' as const, currentValue: 0, changeValue: 0, changeRate: 0, updatedAt: new Date().toISOString() },
-      ],
-    };
+    // Fetch from Kiwoom API
+    try {
+      const [kospi, kosdaq] = await Promise.all([
+        this.kiwoomApi.getMarketIndex('001'),
+        this.kiwoomApi.getMarketIndex('101'),
+      ]);
+      const indices = [kospi, kosdaq];
+      // Cache for 30 seconds
+      await this.redis.setJson('market:indices', indices, 30);
+      return { data: indices };
+    } catch (err) {
+      this.logger.warn(`Failed to fetch market indices: ${err}`);
+      return {
+        data: [
+          { market: 'KOSPI' as const, currentValue: 0, changeValue: 0, changeRate: 0, updatedAt: new Date().toISOString() },
+          { market: 'KOSDAQ' as const, currentValue: 0, changeValue: 0, changeRate: 0, updatedAt: new Date().toISOString() },
+        ],
+      };
+    }
   }
 
   // ─── Private Helpers ─────────────────────────────────────────

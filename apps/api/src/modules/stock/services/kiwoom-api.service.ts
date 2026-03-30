@@ -407,29 +407,47 @@ export class KiwoomApiService implements OnModuleInit, OnModuleDestroy {
   /**
    * Get market index data (KOSPI or KOSDAQ).
    *
-   * Uses index codes: KOSPI=0001, KOSDAQ=1001
+   * Uses Kiwoom ka20004 (업종틱차트조회) API.
+   * Index codes: KOSPI='001', KOSDAQ='101'
+   * Values are returned as integers (e.g., 527730 = 2577.30 for KOSPI)
    */
-  async getMarketIndex(indexCode: '0001' | '1001'): Promise<MarketIndexData> {
-    const marketLabel = indexCode === '0001' ? 'KOSPI' : 'KOSDAQ';
+  async getMarketIndex(indexCode: '001' | '101'): Promise<MarketIndexData> {
+    const marketLabel = indexCode === '001' ? 'KOSPI' : 'KOSDAQ';
     this.logger.debug(`getMarketIndex(${marketLabel})`);
 
-    const params = new URLSearchParams({
-      FID_COND_MRKT_DIV_CODE: 'U', // "U" for index
-      FID_INPUT_ISCD: indexCode,
-    });
-
-    const response = await this.request<KiwoomResponse<KiwoomCurrentPriceOutput>>(
-      'GET',
-      '/v1/quotations/inquire-price',
-      params,
+    const response = await this.request<any>(
+      'POST',
+      '/api/dostk/chart',
+      undefined,
+      { inds_cd: indexCode, tic_scope: '1' },
+      'ka20004',
     );
 
-    const o = response.output;
+    const ticks = response.inds_tic_chart_qry;
+    if (!Array.isArray(ticks) || ticks.length === 0) {
+      return {
+        market: marketLabel as 'KOSPI' | 'KOSDAQ',
+        currentValue: 0,
+        changeValue: 0,
+        changeRate: 0,
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
+    const latest = ticks[0];
+    const curPrc = this.parseNum(latest.cur_prc);
+    const predPre = this.parseNum(latest.pred_pre);
+
+    // Kiwoom returns index * 100 (e.g., 527730 = 2577.30)
+    const currentValue = curPrc / 100;
+    const changeValue = predPre / 100;
+    const changeRate = currentValue > 0 ? (changeValue / (currentValue - changeValue)) * 100 : 0;
+
     return {
       market: marketLabel as 'KOSPI' | 'KOSDAQ',
-      currentValue: this.parseFloat(o.stck_prpr),
-      changeValue: this.parseFloat(o.prdy_vrss),
-      changeRate: this.parseFloat(o.prdy_ctrt),
+      currentValue: Math.round(currentValue * 100) / 100,
+      changeValue: Math.round(changeValue * 100) / 100,
+      changeRate: Math.round(changeRate * 100) / 100,
       updatedAt: new Date().toISOString(),
     };
   }
