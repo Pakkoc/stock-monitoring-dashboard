@@ -7,18 +7,6 @@ import { buildPaginationMeta } from '../../common/interfaces/pagination.interfac
 import type { ListStocksDto } from './dto/list-stocks.dto';
 import type { StockPriceQueryDto } from './dto/stock-price-query.dto';
 
-/** Shape of a single candle in the price history response */
-interface CandleRecord {
-  time: Date;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: bigint;
-  trade_value: bigint;
-  change_rate: number | null;
-}
-
 /** Shape of the latest price row joined for stock list */
 interface LatestPriceRow {
   close: Prisma.Decimal;
@@ -232,10 +220,20 @@ export class StockService {
   }
 
   /**
-   * Get historical OHLCV data using TimescaleDB time_bucket.
+   * Get historical OHLCV data from Kiwoom Securities chart API.
    *
-   * Uses raw SQL to leverage TimescaleDB's time_bucket() function
-   * for efficient time-series aggregation.
+   * Strategy:
+   * 1. Check Redis cache first (keyed by symbol + interval)
+   * 2. If cache miss, call Kiwoom ka10081 (daily) or ka10080 (minute) chart API
+   * 3. Cache the result in Redis for 60 seconds
+   * 4. Return data in the format expected by the frontend CandlestickChartWidget
+   *
+   * Interval mapping to Kiwoom API:
+   * - "1m"  → ka10080 tic_scope=1
+   * - "5m"  → ka10080 tic_scope=5
+   * - "15m" → ka10080 tic_scope=15
+   * - "1h"  → ka10080 tic_scope=60
+   * - "1d"  → ka10081 (daily chart)
    */
   async getPriceHistory(symbol: string, query: StockPriceQueryDto) {
     const { interval, limit } = query;
@@ -249,61 +247,90 @@ export class StockService {
       });
     }
 
-    // Calculate default time range if not specified
-    const to = query.to ? new Date(query.to) : new Date();
-    const defaultFromDays = this.getDefaultFromDays(interval);
-    const from = query.from ? new Date(query.from) : new Date(to.getTime() - defaultFromDays * 24 * 60 * 60 * 1000);
+    // 1. Check Redis cache
+    const cacheKey = `chart:${symbol}:${interval}`;
+    const cached = await this.redis.get(cacheKey);
+    if (cached) {
+      try {
+        const parsed = JSON.parse(cached);
+        this.logger.debug(`Chart cache hit: ${cacheKey}`);
+        return parsed;
+      } catch {
+        // Corrupted cache — fall through to API
+      }
+    }
 
-    // Map interval to TimescaleDB time_bucket interval
-    const bucketInterval = this.mapIntervalToBucket(interval);
+    // 2. Fetch from Kiwoom API
+    let candles: import('./services/kiwoom-api.service').DailyCandle[];
 
-    // Use raw SQL for TimescaleDB time_bucket aggregation
-    const candles = await this.prisma.$queryRawUnsafe<CandleRecord[]>(
-      `
-      SELECT
-        time_bucket($1::interval, time) AS time,
-        first(open, time)::float8 AS open,
-        max(high)::float8 AS high,
-        min(low)::float8 AS low,
-        last(close, time)::float8 AS close,
-        sum(volume) AS volume,
-        sum(trade_value) AS trade_value,
-        last(change_rate, time)::float8 AS change_rate
-      FROM stock_prices
-      WHERE symbol = $2
-        AND time >= $3
-        AND time <= $4
-      GROUP BY time_bucket($1::interval, time)
-      ORDER BY time ASC
-      LIMIT $5
-      `,
-      bucketInterval,
-      symbol,
-      from,
-      to,
-      limit,
-    );
+    try {
+      if (interval === '1d' || interval === '1w' || interval === '1M') {
+        candles = await this.kiwoomApi.getDailyChart(symbol);
+      } else {
+        const minuteScope = this.mapIntervalToMinuteScope(interval);
+        candles = await this.kiwoomApi.getMinuteChart(symbol, minuteScope);
+      }
+    } catch (err) {
+      this.logger.warn(
+        `Kiwoom chart API failed for ${symbol} (${interval}): ${err instanceof Error ? err.message : String(err)}`,
+      );
+      // Return empty result on API failure
+      return this.buildPriceHistoryResponse(symbol, interval, []);
+    }
 
+    // Apply limit (Kiwoom returns most recent first for minute charts)
+    if (candles.length > limit) {
+      candles = candles.slice(0, limit);
+    }
+
+    // Ensure chronological order (oldest first) for chart rendering
+    candles.sort((a, b) => a.date.localeCompare(b.date));
+
+    // Build response in the format expected by the frontend
+    const response = this.buildPriceHistoryResponse(symbol, interval, candles);
+
+    // 3. Cache for 60 seconds
+    await this.redis.set(cacheKey, JSON.stringify(response), 60);
+
+    return response;
+  }
+
+  /**
+   * Build the price history response in the format the frontend expects.
+   *
+   * Frontend CandlestickChartWidget reads:
+   *   data.prices[].timestamp, .open, .high, .low, .close, .volume
+   */
+  private buildPriceHistoryResponse(
+    symbol: string,
+    interval: string,
+    candles: import('./services/kiwoom-api.service').DailyCandle[],
+  ) {
     return {
-      data: {
-        symbol,
-        interval,
-        candles: candles.map((c) => ({
-          time: c.time instanceof Date ? c.time.toISOString() : String(c.time),
-          open: Number(c.open),
-          high: Number(c.high),
-          low: Number(c.low),
-          close: Number(c.close),
-          volume: Number(c.volume),
-          tradeValue: Number(c.trade_value),
-          changeRate: c.change_rate !== null ? Number(c.change_rate) : null,
-        })),
-      },
-      meta: {
-        count: candles.length,
-        from: from.toISOString(),
-        to: to.toISOString(),
-      },
+      prices: candles.map((c) => {
+        // Convert date to ISO timestamp
+        // Daily: YYYYMMDD → ISO date string
+        // Minute: already ISO-like from getMinuteChart (YYYY-MM-DDTHH:mm:ss)
+        let timestamp: string;
+        if (/^\d{8}$/.test(c.date)) {
+          // YYYYMMDD → YYYY-MM-DDT09:00:00+09:00 (KST market open as default time)
+          timestamp = `${c.date.slice(0, 4)}-${c.date.slice(4, 6)}-${c.date.slice(6, 8)}T09:00:00+09:00`;
+        } else {
+          timestamp = c.date.includes('T') ? c.date : new Date(c.date).toISOString();
+        }
+
+        return {
+          symbol,
+          timestamp,
+          open: c.open,
+          high: c.high,
+          low: c.low,
+          close: c.close,
+          volume: c.volume,
+        };
+      }),
+      symbol,
+      timeframe: interval,
     };
   }
 
@@ -478,32 +505,18 @@ export class StockService {
     };
   }
 
-  /** Map frontend interval enum to TimescaleDB time_bucket interval string */
-  private mapIntervalToBucket(interval: string): string {
+  /**
+   * Map frontend interval to Kiwoom ka10080 tic_scope value.
+   * Only used for minute-based intervals (not daily).
+   */
+  private mapIntervalToMinuteScope(interval: string): string {
     const mapping: Record<string, string> = {
-      '1m': '1 minute',
-      '5m': '5 minutes',
-      '15m': '15 minutes',
-      '1h': '1 hour',
-      '1d': '1 day',
-      '1w': '1 week',
-      '1M': '1 month',
+      '1m': '1',
+      '5m': '5',
+      '15m': '15',
+      '1h': '60',
     };
-    return mapping[interval] ?? '1 day';
-  }
-
-  /** Default lookback days based on interval */
-  private getDefaultFromDays(interval: string): number {
-    const mapping: Record<string, number> = {
-      '1m': 1,
-      '5m': 5,
-      '15m': 10,
-      '1h': 30,
-      '1d': 90,
-      '1w': 365,
-      '1M': 730,
-    };
-    return mapping[interval] ?? 30;
+    return mapping[interval] ?? '1';
   }
 }
 

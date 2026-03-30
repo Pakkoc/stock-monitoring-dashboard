@@ -51,18 +51,25 @@ interface KiwoomCurrentPriceOutput {
   hts_avls: string;          // Market capitalization
 }
 
-/** Daily chart record */
+/** Kiwoom ka10081 daily chart record */
 interface KiwoomDailyChartRecord {
-  stck_bsop_date: string;    // Trading date (yyyyMMdd)
-  stck_oprc: string;         // Opening price
-  stck_hgpr: string;         // High price
-  stck_lwpr: string;         // Low price
-  stck_clpr: string;         // Closing price
-  acml_vol: string;          // Accumulated volume
-  acml_tr_pbmn: string;      // Accumulated trading value
-  prdy_vrss: string;         // Change from previous day
-  prdy_vrss_sign: string;    // Change direction
-  prdy_ctrt: string;         // Change rate (%)
+  cur_prc: string;           // Close price (may have +/- prefix)
+  trde_qty: string;          // Trade volume
+  dt: string;                // Date (YYYYMMDD)
+  open_pric: string;         // Opening price (may have +/- prefix)
+  high_pric: string;         // High price (may have +/- prefix)
+  low_pric: string;          // Low price (may have +/- prefix)
+  pred_pre: string;          // Change from previous day
+}
+
+/** Kiwoom ka10080 minute chart record */
+interface KiwoomMinuteChartRecord {
+  cur_prc: string;           // Close price (may have +/- prefix)
+  trde_qty: string;          // Trade volume
+  cntr_tm: string;           // Contract time (YYYYMMDDHHmmss)
+  open_pric: string;         // Opening price (may have +/- prefix)
+  high_pric: string;         // High price (may have +/- prefix)
+  low_pric: string;          // Low price (may have +/- prefix)
 }
 
 /** Volume rank item */
@@ -318,48 +325,88 @@ export class KiwoomApiService implements OnModuleInit, OnModuleDestroy {
   }
 
   /**
-   * Get daily chart data for a symbol.
+   * Get daily chart data for a symbol (Kiwoom ka10081).
    *
-   * @param symbol    Stock code (e.g., "005930")
-   * @param startDate Start date in yyyyMMdd format
-   * @param endDate   End date in yyyyMMdd format
-   * @param period    "D" | "W" | "M" | "Y" (default "D")
+   * @param symbol   Stock code (e.g., "005930")
+   * @param baseDate Base date in YYYYMMDD format (defaults to today)
    */
   async getDailyChart(
     symbol: string,
-    startDate: string,
-    endDate: string,
-    period: 'D' | 'W' | 'M' | 'Y' = 'D',
+    baseDate?: string,
   ): Promise<DailyCandle[]> {
-    this.logger.debug(`getDailyChart(${symbol}, ${startDate}~${endDate}, ${period})`);
+    const dt = baseDate ?? this.formatDateYYYYMMDD(new Date());
+    this.logger.debug(`getDailyChart(${symbol}, baseDate=${dt}) via ka10081`);
 
-    const params = new URLSearchParams({
-      FID_COND_MRKT_DIV_CODE: 'J',
-      FID_INPUT_ISCD: symbol,
-      FID_INPUT_DATE_1: startDate,
-      FID_INPUT_DATE_2: endDate,
-      FID_PERIOD_DIV_CODE: period,
-      FID_ORG_ADJ_PRC: '0', // adjusted price
-    });
-
-    const response = await this.request<KiwoomListResponse<KiwoomDailyChartRecord>>(
-      'GET',
-      '/v1/quotations/inquire-daily-chartprice',
-      params,
+    const response = await this.request<any>(
+      'POST',
+      '/api/dostk/chart',
+      undefined,
+      { stk_cd: symbol, base_dt: dt, upd_stkpc_tp: '1' },
+      'ka10081',
     );
 
-    const records = Array.isArray(response.output) ? response.output : [];
+    const records: KiwoomDailyChartRecord[] =
+      Array.isArray(response.stk_dt_pole_chart_qry)
+        ? response.stk_dt_pole_chart_qry
+        : [];
+
     return records.map((r) => ({
-      date: r.stck_bsop_date,
-      open: this.parseNum(r.stck_oprc),
-      high: this.parseNum(r.stck_hgpr),
-      low: this.parseNum(r.stck_lwpr),
-      close: this.parseNum(r.stck_clpr),
-      volume: this.parseNum(r.acml_vol),
-      tradeValue: this.parseNum(r.acml_tr_pbmn),
-      changeAmount: this.parseNum(r.prdy_vrss),
-      changeRate: this.parseFloat(r.prdy_ctrt),
+      date: r.dt, // YYYYMMDD
+      open: Math.abs(this.parseNum(r.open_pric)),
+      high: Math.abs(this.parseNum(r.high_pric)),
+      low: Math.abs(this.parseNum(r.low_pric)),
+      close: Math.abs(this.parseNum(r.cur_prc)),
+      volume: this.parseNum(r.trde_qty),
+      tradeValue: 0,
+      changeAmount: this.parseNum(r.pred_pre),
+      changeRate: 0,
     }));
+  }
+
+  /**
+   * Get minute chart data for a symbol (Kiwoom ka10080).
+   *
+   * @param symbol      Stock code (e.g., "005930")
+   * @param minuteScope Tick interval: "1","3","5","10","15","30","45","60"
+   */
+  async getMinuteChart(
+    symbol: string,
+    minuteScope: string = '1',
+  ): Promise<DailyCandle[]> {
+    this.logger.debug(`getMinuteChart(${symbol}, scope=${minuteScope}) via ka10080`);
+
+    const response = await this.request<any>(
+      'POST',
+      '/api/dostk/chart',
+      undefined,
+      { stk_cd: symbol, tic_scope: minuteScope, upd_stkpc_tp: '1' },
+      'ka10080',
+    );
+
+    const records: KiwoomMinuteChartRecord[] =
+      Array.isArray(response.stk_min_pole_chart_qry)
+        ? response.stk_min_pole_chart_qry
+        : [];
+
+    return records.map((r) => {
+      // cntr_tm format: YYYYMMDDHHmmss → ISO string
+      const t = r.cntr_tm;
+      const isoDate = t.length >= 14
+        ? `${t.slice(0, 4)}-${t.slice(4, 6)}-${t.slice(6, 8)}T${t.slice(8, 10)}:${t.slice(10, 12)}:${t.slice(12, 14)}`
+        : t;
+
+      return {
+        date: isoDate,
+        open: Math.abs(this.parseNum(r.open_pric)),
+        high: Math.abs(this.parseNum(r.high_pric)),
+        low: Math.abs(this.parseNum(r.low_pric)),
+        close: Math.abs(this.parseNum(r.cur_prc)),
+        volume: this.parseNum(r.trde_qty),
+        tradeValue: 0,
+        changeAmount: 0,
+        changeRate: 0,
+      };
+    });
   }
 
   /**
@@ -764,5 +811,13 @@ export class KiwoomApiService implements OnModuleInit, OnModuleDestroy {
     const cleaned = value.replace(/,/g, '');
     const parsed = globalThis.parseFloat(cleaned);
     return Number.isNaN(parsed) ? 0 : parsed;
+  }
+
+  /** Format a Date to YYYYMMDD string */
+  private formatDateYYYYMMDD(date: Date): string {
+    const y = date.getFullYear();
+    const m = String(date.getMonth() + 1).padStart(2, '0');
+    const d = String(date.getDate()).padStart(2, '0');
+    return `${y}${m}${d}`;
   }
 }
