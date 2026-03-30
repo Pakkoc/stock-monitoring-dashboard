@@ -33,7 +33,7 @@ const loginSchema = z.object({
 });
 
 interface LoginResponse {
-  user: SessionUser;
+  data: SessionUser;
   token: string;
 }
 
@@ -92,7 +92,7 @@ function LoginForm() {
           password: result.data.password,
         });
 
-        login(response.user, response.token);
+        login(response.data, response.token);
         router.push(callbackUrl);
       } catch (err: unknown) {
         const apiErr = err as { message?: string; statusCode?: number };
