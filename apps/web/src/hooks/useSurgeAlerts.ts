@@ -40,5 +40,7 @@ export function useSurgeAlerts() {
     },
     staleTime: 10_000,
     gcTime: 5 * 60 * 1000,
+    // Don't retry on 404 — the endpoint doesn't exist yet
+    retry: false,
   });
 }

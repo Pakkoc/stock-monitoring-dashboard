@@ -17,6 +17,7 @@ import { StockPrice } from '@/components/ui/StockPrice';
 import { ChangeRate } from '@/components/ui/ChangeRate';
 import { VolumeDisplay } from '@/components/ui/NumberFormat';
 import { useWatchlists } from '@/hooks/useWatchlist';
+import { useAuthStore } from '@/stores/auth';
 import { useDashboardStore } from '@/stores/dashboard';
 import { useRealtimeStore } from '@/stores/realtime';
 
@@ -29,6 +30,7 @@ interface WatchlistWidgetProps {
 
 export function WatchlistWidget({ watchlistId }: WatchlistWidgetProps) {
   const { data, isLoading, error } = useWatchlists();
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
   const setActiveSymbol = useDashboardStore((s) => s.setActiveSymbol);
   const activeSymbol = useDashboardStore((s) => s.activeSymbol);
   const prices = useRealtimeStore((s) => s.prices);
@@ -192,7 +194,9 @@ export function WatchlistWidget({ watchlistId }: WatchlistWidgetProps) {
                     colSpan={4}
                     className="py-8 text-center text-sm text-muted-foreground"
                   >
-                    관심종목이 없습니다
+                    {!isAuthenticated()
+                      ? '로그인 후 관심종목을 추가하세요'
+                      : '관심종목이 없습니다'}
                   </td>
                 </tr>
               )}

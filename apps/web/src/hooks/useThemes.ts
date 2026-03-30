@@ -54,5 +54,7 @@ export function useThemePerformance(limit: number = 10) {
     },
     staleTime: 30_000,
     refetchInterval: 30_000,
+    // Don't retry on 404 — the endpoint doesn't exist yet
+    retry: false,
   });
 }

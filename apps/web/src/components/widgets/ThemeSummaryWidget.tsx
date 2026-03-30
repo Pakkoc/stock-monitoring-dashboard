@@ -53,7 +53,8 @@ export function ThemeSummaryWidget({ limit = 10 }: ThemeSummaryWidgetProps) {
         {!isLoading && themes.length === 0 && (
           <div className="flex flex-col items-center justify-center py-8 text-muted-foreground">
             <TrendingUp size={24} className="mb-2" />
-            <span className="text-sm">데이터 없음</span>
+            <span className="text-sm">테마 데이터 준비 중</span>
+            <span className="mt-1 text-xs">테마별 성과 분석이 곧 제공됩니다</span>
           </div>
         )}
       </div>

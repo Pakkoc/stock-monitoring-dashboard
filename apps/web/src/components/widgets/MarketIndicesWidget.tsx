@@ -28,6 +28,12 @@ export function MarketIndicesWidget() {
     return data?.indices ?? [];
   }, [data, realtimeIndices]);
 
+  // Detect if all index values are zero (Kiwoom API not yet providing market indices)
+  const allZero = useMemo(() => {
+    if (indices.length === 0) return false;
+    return indices.every((idx) => idx.currentValue === 0);
+  }, [indices]);
+
   return (
     <WidgetWrapper widgetId="marketIndices" title="시장 지수">
       {isLoading && indices.length === 0 && (
@@ -43,11 +49,21 @@ export function MarketIndicesWidget() {
       )}
 
       <div className="flex flex-col gap-3">
-        {indices.map((index) => (
-          <IndexCard key={index.market} index={index} />
-        ))}
+        {allZero ? (
+          <div className="flex flex-col items-center justify-center py-4 text-muted-foreground">
+            <BarChart3 size={20} className="mb-1" />
+            <span className="text-xs">지수 조회 준비 중</span>
+            <span className="mt-1 text-[10px]">장 마감 또는 API 연동 대기</span>
+          </div>
+        ) : (
+          <>
+            {indices.map((index) => (
+              <IndexCard key={index.market} index={index} />
+            ))}
+          </>
+        )}
 
-        {!isLoading && indices.length === 0 && (
+        {!isLoading && !allZero && indices.length === 0 && (
           <div className="flex flex-col items-center justify-center py-4 text-muted-foreground">
             <BarChart3 size={20} className="mb-1" />
             <span className="text-xs">지수 데이터 없음</span>

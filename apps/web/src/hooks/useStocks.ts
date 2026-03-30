@@ -7,11 +7,17 @@
  * staleTime: 10s — list data updated by WebSocket events.
  */
 import { useQuery } from '@tanstack/react-query';
-import { apiGet, type ApiResponse } from '@/lib/api';
+import { apiGet } from '@/lib/api';
 import { queryKeys, type StockFilters } from '@/lib/query-keys';
 import type { StockInfo } from '@stock-dashboard/shared';
 
-interface StockListResponse {
+/**
+ * Backend response shape for /api/stocks:
+ *   { data: StockInfo[], meta: { page, limit, total, ... } }
+ *
+ * We normalize this into a consistent StockListResult.
+ */
+interface StockListResult {
   stocks: StockInfo[];
   total: number;
   page: number;
@@ -33,7 +39,16 @@ export function useStocks(filters: StockFilters = {}) {
 
   return useQuery({
     queryKey: queryKeys.stocks.list(filters),
-    queryFn: () => apiGet<ApiResponse<StockListResponse>>(endpoint),
+    queryFn: async (): Promise<StockListResult> => {
+      // Backend returns { data: StockInfo[], meta?: { page, limit, total, ... } }
+      const raw = await apiGet<{ data: StockInfo[]; meta?: { total: number; page: number; limit: number } }>(endpoint);
+      return {
+        stocks: raw.data ?? [],
+        total: raw.meta?.total ?? (raw.data?.length ?? 0),
+        page: raw.meta?.page ?? 1,
+        limit: raw.meta?.limit ?? (filters.limit ?? 20),
+      };
+    },
     staleTime: 10_000,
   });
 }

@@ -37,7 +37,7 @@ export function TopVolumeWidget({ limit = 10 }: TopVolumeWidgetProps) {
   const { data, isLoading, error } = useTopVolumeStocks(limit, filterParam as 'kospi' | 'kosdaq' | undefined);
 
   const stocks = useMemo(() => {
-    return data?.data?.stocks ?? [];
+    return data?.stocks ?? [];
   }, [data]);
 
   const filterTabs = useMemo(
