@@ -62,6 +62,7 @@ export interface StockPrice {
 
 /** Stock search/filter result */
 export interface StockInfo {
+  id: number;
   symbol: string;
   name: string;
   market: Market;
