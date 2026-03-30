@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { StockController } from './stock.controller';
+import { ThemeController } from './theme.controller';
 import { StockService } from './stock.service';
 import { StockGateway } from './stock.gateway';
 import { KiwoomApiService } from './services/kiwoom-api.service';
@@ -29,7 +30,7 @@ import { StockQueueService } from './services/stock-queue.service';
  * Exports: StockService, StockGateway, KiwoomApiService for cross-module consumption.
  */
 @Module({
-  controllers: [StockController],
+  controllers: [StockController, ThemeController],
   providers: [
     // Core services
     StockService,

@@ -366,6 +366,82 @@ export class StockService {
     }
   }
 
+  /**
+   * Get theme performance data — each theme with its stocks' latest prices.
+   *
+   * 1. Query all themes with their stock relations from DB
+   * 2. For each stock, read the latest price from Redis cache (`stock:price:{symbol}`)
+   * 3. Calculate theme-level average changeRate
+   * 4. Return in the shape the frontend ThemeSummaryWidget expects
+   */
+  async getThemePerformance(limit: number = 10) {
+    const themes = await this.prisma.theme.findMany({
+      take: limit,
+      include: {
+        themeStocks: {
+          include: {
+            stock: { select: { id: true, symbol: true, name: true, market: true } },
+          },
+        },
+      },
+    });
+
+    const result = await Promise.all(
+      themes.map(async (theme) => {
+        const stocks = await Promise.all(
+          theme.themeStocks.map(async (ts) => {
+            const cached = await this.redis.get(`stock:price:${ts.stock.symbol}`);
+            let currentPrice = 0;
+            let changeRate = 0;
+
+            if (cached) {
+              try {
+                const p = JSON.parse(cached);
+                currentPrice = p.currentPrice || 0;
+                changeRate = p.changeRate || 0;
+              } catch {
+                // corrupted cache — use defaults
+              }
+            }
+
+            return {
+              symbol: ts.stock.symbol,
+              name: ts.stock.name,
+              changePercent: changeRate,
+              currentPrice,
+            };
+          }),
+        );
+
+        // Average change rate across all stocks in the theme
+        const avgChangePercent =
+          stocks.length > 0
+            ? stocks.reduce((sum, s) => sum + s.changePercent, 0) / stocks.length
+            : 0;
+
+        // Top stocks sorted by absolute changePercent (most volatile first)
+        const topStocks = [...stocks]
+          .sort((a, b) => Math.abs(b.changePercent) - Math.abs(a.changePercent))
+          .slice(0, 5)
+          .map(({ symbol, name, changePercent }) => ({ symbol, name, changePercent }));
+
+        return {
+          themeId: String(theme.id),
+          name: theme.name,
+          changePercent: Math.round(avgChangePercent * 100) / 100,
+          stockCount: stocks.length,
+          topStocks,
+          // sparklineData and totalTradeValue are placeholders — can be enhanced
+          // with historical data once price history aggregation is available
+          sparklineData: [] as number[],
+          totalTradeValue: 0,
+        };
+      }),
+    );
+
+    return { themes: result };
+  }
+
   // ─── Private Helpers ─────────────────────────────────────────
 
   /**
