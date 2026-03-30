@@ -29,7 +29,6 @@ import { SurgeAlertWidget } from '@/components/widgets/SurgeAlertWidget';
 import { MarketIndicesWidget } from '@/components/widgets/MarketIndicesWidget';
 import { TopVolumeWidget } from '@/components/widgets/TopVolumeWidget';
 
-import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 
 const ResponsiveGridLayout = WidthProvider(Responsive);
@@ -74,8 +73,6 @@ export default function DashboardPage() {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar />
-
       <div className="flex flex-1 flex-col overflow-hidden">
         <Header />
 
