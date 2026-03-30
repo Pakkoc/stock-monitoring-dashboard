@@ -20,6 +20,7 @@ import {
 import type { Socket } from 'socket.io-client';
 import { socketManager, type ConnectionStatus } from '@/lib/socket';
 import { useRealtimeStore } from '@/stores/realtime';
+import { useAuthStore } from '@/stores/auth';
 import {
   SOCKET_EVENTS,
   type StockPricePayload,
@@ -64,7 +65,12 @@ export function SocketProvider({ children }: SocketProviderProps) {
   const connectionStatus = useRealtimeStore((s) => s.connectionStatus);
   const setConnectionStatus = useRealtimeStore((s) => s.setConnectionStatus);
 
+  const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
   useEffect(() => {
+    // Only connect when authenticated
+    if (!isAuthenticated) return;
+
     // Connect socket
     const socket = socketManager.connect();
     socketRef.current = socket;
@@ -119,7 +125,7 @@ export function SocketProvider({ children }: SocketProviderProps) {
       socketManager.disconnect();
       socketRef.current = null;
     };
-  }, [updatePrice, addSurgeAlert, updateIndices, setMarketOpen, setConnectionStatus]);
+  }, [isAuthenticated, updatePrice, addSurgeAlert, updateIndices, setMarketOpen, setConnectionStatus]);
 
   const contextValue: SocketContextValue = {
     socket: socketRef.current,
