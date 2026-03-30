@@ -34,7 +34,7 @@ export function TopVolumeWidget({ limit = 10 }: TopVolumeWidgetProps) {
   const activeSymbol = useDashboardStore((s) => s.activeSymbol);
   const prices = useRealtimeStore((s) => s.prices);
 
-  const handleAddToWatchlist = useCallback(async (e: React.MouseEvent, symbol: string) => {
+  const handleAddToWatchlist = useCallback(async (e: React.MouseEvent, id: number, symbol: string) => {
     e.stopPropagation();
     if (addedSymbols.has(symbol)) return;
 
@@ -52,7 +52,7 @@ export function TopVolumeWidget({ limit = 10 }: TopVolumeWidgetProps) {
         watchlistId = created.data.id;
       }
 
-      await apiPost(`/watchlists/${watchlistId}/stocks`, { symbol });
+      await apiPost(`/watchlists/${watchlistId}/items`, { stockId: id });
       setAddedSymbols((prev) => new Set(prev).add(symbol));
     } catch {
       // Silently fail — user may not be logged in
@@ -158,7 +158,7 @@ export function TopVolumeWidget({ limit = 10 }: TopVolumeWidgetProps) {
                     </td>
                     <td className="py-1.5 text-center">
                       <button
-                        onClick={(e) => handleAddToWatchlist(e, stock.symbol)}
+                        onClick={(e) => handleAddToWatchlist(e, stock.id, stock.symbol)}
                         className="inline-flex items-center justify-center rounded p-0.5 transition-colors hover:bg-accent"
                         title="관심종목 추가"
                       >
