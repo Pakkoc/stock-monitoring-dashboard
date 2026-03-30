@@ -21,7 +21,7 @@ interface ThemeSummaryWidgetProps {
 }
 
 export function ThemeSummaryWidget({ limit = 10 }: ThemeSummaryWidgetProps) {
-  const { data, isLoading, error } = useThemePerformance(limit);
+  const { data, isLoading } = useThemePerformance(limit);
   const [expandedTheme, setExpandedTheme] = useState<string | null>(null);
   const setActiveSymbol = useDashboardStore((s) => s.setActiveSymbol);
 

@@ -7,6 +7,8 @@ import {
 import { ConfigService } from '@nestjs/config';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { KiwoomApiService, type CurrentPriceData } from './kiwoom-api.service';
+import { PrismaService } from '../../../shared/database/prisma.service';
+import { RedisService } from '../../../shared/redis/redis.service';
 
 // ─── Types ──────────────────────────────────────────────────
 
@@ -69,6 +71,8 @@ export class StockPollingService implements OnModuleInit, OnModuleDestroy {
     private readonly config: ConfigService,
     private readonly kiwoomApi: KiwoomApiService,
     private readonly eventEmitter: EventEmitter2,
+    private readonly prisma: PrismaService,
+    private readonly redis: RedisService,
   ) {
     this.pollIntervalMs = this.config.get<number>('POLLING_INTERVAL_MS', 5_000);
     this.maxSubscriptions = this.config.get<number>('MAX_POLLING_SUBSCRIPTIONS', 50);
@@ -82,9 +86,24 @@ export class StockPollingService implements OnModuleInit, OnModuleDestroy {
       return;
     }
 
+    // Auto-subscribe all active stocks from DB
+    try {
+      const stocks = await this.prisma.stock.findMany({
+        where: { isActive: true },
+        select: { symbol: true },
+        take: this.maxSubscriptions,
+      });
+      for (const stock of stocks) {
+        this.subscriptions.add(stock.symbol);
+      }
+      this.logger.log(`Auto-subscribed ${stocks.length} stocks from DB`);
+    } catch (err) {
+      this.logger.warn(`Failed to auto-subscribe stocks: ${err}`);
+    }
+
     this.startPolling();
     this.logger.log(
-      `Stock polling service initialized (interval=${this.pollIntervalMs}ms, maxSubs=${this.maxSubscriptions})`,
+      `Stock polling service initialized (interval=${this.pollIntervalMs}ms, subs=${this.subscriptions.size})`,
     );
   }
 
@@ -188,25 +207,31 @@ export class StockPollingService implements OnModuleInit, OnModuleDestroy {
   private async pollAll(): Promise<void> {
     if (this.isDestroying || this.subscriptions.size === 0) return;
 
-    // Gate: only poll during market hours
-    if (!this.isMarketOpen()) {
-      return;
-    }
+    // Gate: skip market hours check for MVP demo
+    // if (!this.isMarketOpen()) {
+    //   return;
+    // }
 
     const symbols = Array.from(this.subscriptions);
 
-    // Fetch prices in batches to respect rate limits.
-    // With 10 req/sec rate limit and 5s interval, we can do up to 50 requests per cycle.
-    const results = await Promise.allSettled(
-      symbols.map((symbol) => this.fetchAndEmitPrice(symbol)),
-    );
+    // Sequential requests with small delay to respect rate limits
+    let successCount = 0;
+    let failCount = 0;
+    for (const symbol of symbols) {
+      try {
+        await this.fetchAndEmitPrice(symbol);
+        successCount++;
+      } catch {
+        failCount++;
+      }
+      // Small delay between requests (100ms = max 10 req/sec)
+      await new Promise<void>((r) => setTimeout(r, 150));
+    }
 
-    // Log any failures (but don't crash the polling loop)
-    const failures = results.filter((r) => r.status === 'rejected');
-    if (failures.length > 0) {
-      this.logger.warn(
-        `Polling cycle: ${failures.length}/${symbols.length} requests failed`,
-      );
+    if (failCount > 0) {
+      this.logger.warn(`Polling cycle: ${failCount}/${symbols.length} failed, ${successCount} OK`);
+    } else if (successCount > 0) {
+      this.logger.debug(`Polling cycle: ${successCount} stocks updated`);
     }
   }
 
@@ -217,19 +242,11 @@ export class StockPollingService implements OnModuleInit, OnModuleDestroy {
     try {
       const priceData: CurrentPriceData = await this.kiwoomApi.getCurrentPrice(symbol);
 
-      // Compare with cached price — only emit if changed
+      // Always update Redis cache regardless of change
       const prevPrice = this.previousPrices.get(symbol);
       const prevVolume = this.previousVolumes.get(symbol);
 
-      if (
-        prevPrice !== undefined &&
-        prevPrice === priceData.currentPrice &&
-        prevVolume !== undefined &&
-        prevVolume === priceData.volume
-      ) {
-        // No change — skip emission
-        return;
-      }
+      const priceChanged = prevPrice === undefined || prevPrice !== priceData.currentPrice || prevVolume !== priceData.volume;
 
       // Calculate execution volume delta
       const executionVolume =
@@ -261,11 +278,20 @@ export class StockPollingService implements OnModuleInit, OnModuleDestroy {
         accumulatedTradeValue: priceData.tradeValue,
       };
 
-      // Emit — pipeline service listens for this event
-      this.eventEmitter.emit(REALTIME_PRICE_EVENT, realtimePrice);
+      // Always cache latest price in Redis for API reads (TTL 5 min)
+      await this.redis.set(
+        `stock:price:${symbol}`,
+        JSON.stringify(realtimePrice),
+        300,
+      );
+
+      // Only emit event if price actually changed
+      if (priceChanged) {
+        this.eventEmitter.emit(REALTIME_PRICE_EVENT, realtimePrice);
+      }
     } catch (error) {
-      this.logger.debug(
-        `Failed to poll price for ${symbol}: ${error instanceof Error ? error.message : String(error)}`,
+      this.logger.warn(
+        `Failed to poll price for ${symbol}: ${error instanceof Error ? error.stack : String(error)}`,
       );
       throw error; // Re-throw so Promise.allSettled records it
     }

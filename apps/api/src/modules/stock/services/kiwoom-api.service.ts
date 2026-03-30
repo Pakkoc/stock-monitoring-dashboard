@@ -226,7 +226,7 @@ export class KiwoomApiService implements OnModuleInit, OnModuleDestroy {
   ) {
     this.baseUrl = this.config.get<string>(
       'KIWOOM_BASE_URL',
-      'https://openapi.kiwoom.com/api',
+      'https://api.kiwoom.com',
     );
     this.appKey = this.config.get<string>('KIWOOM_APP_KEY', '');
     this.appSecret = this.config.get<string>('KIWOOM_APP_SECRET', '');
@@ -282,36 +282,38 @@ export class KiwoomApiService implements OnModuleInit, OnModuleDestroy {
   async getCurrentPrice(symbol: string): Promise<CurrentPriceData> {
     this.logger.debug(`getCurrentPrice(${symbol})`);
 
-    const params = new URLSearchParams({
-      FID_COND_MRKT_DIV_CODE: 'J',
-      FID_INPUT_ISCD: symbol,
-    });
-
-    const response = await this.request<KiwoomResponse<KiwoomCurrentPriceOutput>>(
-      'GET',
-      '/v1/quotations/inquire-price',
-      params,
+    const response = await this.request<any>(
+      'POST',
+      '/api/dostk/stkinfo',
+      undefined,
+      { stk_cd: symbol },
+      'ka10001',
     );
 
-    const o = response.output;
+    // Kiwoom returns numbers as strings with +/- prefix
+    const absNum = (v: string | undefined): number => {
+      if (!v) return 0;
+      return Math.abs(this.parseNum(v));
+    };
+
     return {
       symbol,
-      currentPrice: this.parseNum(o.stck_prpr),
-      changeAmount: this.parseNum(o.prdy_vrss),
-      changeRate: this.parseFloat(o.prdy_ctrt),
-      changeSign: this.parseNum(o.prdy_vrss_sign),
-      open: this.parseNum(o.stck_oprc),
-      high: this.parseNum(o.stck_hgpr),
-      low: this.parseNum(o.stck_lwpr),
-      volume: this.parseNum(o.acml_vol),
-      tradeValue: this.parseNum(o.acml_tr_pbmn),
-      upperLimit: this.parseNum(o.stck_mxpr),
-      lowerLimit: this.parseNum(o.stck_llam),
-      per: this.parseFloat(o.per),
-      pbr: this.parseFloat(o.pbr),
-      eps: this.parseNum(o.eps),
-      bps: this.parseNum(o.bps),
-      marketCap: this.parseNum(o.hts_avls),
+      currentPrice: absNum(response.cur_prc),
+      changeAmount: this.parseNum(response.pred_pre || '0'),
+      changeRate: this.parseFloat(response.flu_rt || '0'),
+      changeSign: this.parseNum(response.pre_sig || '3'),
+      open: absNum(response.open_pric),
+      high: absNum(response.high_pric),
+      low: absNum(response.low_pric),
+      volume: this.parseNum(response.trde_qty || '0'),
+      tradeValue: 0,
+      upperLimit: absNum(response.upl_pric),
+      lowerLimit: absNum(response.lst_pric),
+      per: this.parseFloat(response.per || '0'),
+      pbr: this.parseFloat(response.pbr || '0'),
+      eps: this.parseNum(response.eps || '0'),
+      bps: this.parseNum(response.bps || '0'),
+      marketCap: this.parseNum(response.mac || '0'),
     };
   }
 
@@ -447,11 +449,11 @@ export class KiwoomApiService implements OnModuleInit, OnModuleDestroy {
 
     const response = await fetch(`${this.baseUrl}/oauth2/token`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 'Content-Type': 'application/json;charset=UTF-8' },
       body: JSON.stringify({
         grant_type: 'client_credentials',
         appkey: this.appKey,
-        appsecret: this.appSecret,
+        secretkey: this.appSecret,
       }),
     });
 
@@ -459,9 +461,13 @@ export class KiwoomApiService implements OnModuleInit, OnModuleDestroy {
       throw new Error(`Kiwoom token request failed: ${response.status} ${response.statusText}`);
     }
 
-    const tokenData = (await response.json()) as KiwoomTokenResponse;
-    this.accessToken = tokenData.access_token;
-    this.tokenExpiresAt = new Date(tokenData.access_token_token_expired);
+    const tokenData = (await response.json()) as any;
+    this.accessToken = tokenData.token;
+    // expires_dt format: "20260331175422" → parse to Date
+    const dt = tokenData.expires_dt;
+    this.tokenExpiresAt = new Date(
+      `${dt.slice(0,4)}-${dt.slice(4,6)}-${dt.slice(6,8)}T${dt.slice(8,10)}:${dt.slice(10,12)}:${dt.slice(12,14)}`,
+    );
 
     // Cache token in Redis
     await this.storeTokenInRedis();
@@ -537,6 +543,7 @@ export class KiwoomApiService implements OnModuleInit, OnModuleDestroy {
     path: string,
     params?: URLSearchParams,
     body?: Record<string, unknown>,
+    apiId?: string,
   ): Promise<T> {
     // Circuit breaker check
     this.checkCircuitBreaker();
@@ -553,18 +560,20 @@ export class KiwoomApiService implements OnModuleInit, OnModuleDestroy {
         : `${this.baseUrl}${path}`;
 
     const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json;charset=UTF-8',
       authorization: `Bearer ${this.accessToken}`,
-      appkey: this.appKey,
-      appsecret: this.appSecret,
     };
+
+    if (apiId) {
+      headers['api-id'] = apiId;
+    }
 
     const fetchOptions: RequestInit = {
       method,
       headers,
     };
 
-    if (method === 'POST' && body) {
+    if (body) {
       fetchOptions.body = JSON.stringify(body);
     }
 

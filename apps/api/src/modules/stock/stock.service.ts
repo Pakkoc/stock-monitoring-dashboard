@@ -110,8 +110,31 @@ export class StockService {
     const symbols = stocks.map((s) => s.symbol);
     const latestPrices = await this.getLatestPricesForSymbols(symbols);
 
-    // Combine stock data with price data
-    const data = stocks.map((stock) => {
+    // Combine stock data with price data (Redis cache first, then DB fallback)
+    const data = await Promise.all(stocks.map(async (stock) => {
+      // Try Redis cache first (populated by polling service)
+      const cached = await this.redis.get(`stock:price:${stock.symbol}`);
+      if (cached) {
+        try {
+          const p = JSON.parse(cached);
+          return {
+            id: stock.id,
+            symbol: stock.symbol,
+            name: stock.name,
+            market: stock.market,
+            sector: stock.sector,
+            currentPrice: p.currentPrice || 0,
+            changeRate: p.changeRate || 0,
+            changeAmount: p.changeAmount || 0,
+            volume: p.accumulatedVolume || 0,
+            tradeValue: p.accumulatedTradeValue || 0,
+            high: p.high || 0,
+            low: p.low || 0,
+            open: p.open || 0,
+            updatedAt: new Date().toISOString(),
+          };
+        } catch { /* fall through to DB */ }
+      }
       const price = latestPrices.get(stock.symbol);
       return {
         id: stock.id,
@@ -129,7 +152,7 @@ export class StockService {
         open: price ? Number(price.open) : 0,
         updatedAt: price?.time?.toISOString() ?? stock.updatedAt.toISOString(),
       };
-    });
+    }));
 
     // Apply price-based sorting in-memory (for fields not in the Stock table)
     if (sortBy === 'tradeValue' || sortBy === 'changeRate' || sortBy === 'volume') {
