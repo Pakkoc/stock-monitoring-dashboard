@@ -72,6 +72,8 @@ async function getSnapshotFallback(endpoint: string): Promise<unknown | null> {
     const sym = priceMatch[1] ?? '';
     const symbolData = (charts as any)[sym];
     if (symbolData) return symbolData;
+    // 스냅샷에 없는 종목은 빈 차트 반환
+    return { prices: [], symbol: sym, timeframe: '1d' };
   }
   // /stocks/:symbol (detail)
   const detailMatch = endpoint.match(/\/stocks\/(\d+)$/);
@@ -81,6 +83,12 @@ async function getSnapshotFallback(endpoint: string): Promise<unknown | null> {
     if (stock) return { data: stock };
   }
 
+  // /stocks/:symbol/news
+  if (endpoint.match(/\/stocks\/\d+\/news/)) {
+    return s?.news ?? { data: [] };
+  }
+
+  // Any other endpoint — return empty data instead of null to prevent errors
   return null;
 }
 
