@@ -69,13 +69,15 @@ async function getSnapshotFallback(endpoint: string): Promise<unknown | null> {
   const priceMatch = endpoint.match(/\/stocks\/(\d+)\/prices/);
   if (priceMatch) {
     const charts = await loadChartSnapshot();
-    const symbolData = (charts as any)[priceMatch[1]];
+    const sym = priceMatch[1] ?? '';
+    const symbolData = (charts as any)[sym];
     if (symbolData) return symbolData;
   }
   // /stocks/:symbol (detail)
   const detailMatch = endpoint.match(/\/stocks\/(\d+)$/);
   if (detailMatch && s?.stocks?.data) {
-    const stock = s.stocks.data.find((st: any) => st.symbol === detailMatch[1]);
+    const detailSym = detailMatch[1] ?? '';
+    const stock = s.stocks.data.find((st: any) => st.symbol === detailSym);
     if (stock) return { data: stock };
   }
 
