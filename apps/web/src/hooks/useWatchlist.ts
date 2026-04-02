@@ -9,7 +9,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiGet, apiPost, apiDelete } from '@/lib/api';
 import { queryKeys } from '@/lib/query-keys';
-import { useAuthStore } from '@/stores/auth';
 import type { StockInfo } from '@stock-dashboard/shared';
 
 interface WatchlistResponse {
@@ -27,8 +26,6 @@ interface WatchlistListResponse {
 }
 
 export function useWatchlists() {
-  const token = useAuthStore((s) => s.token);
-
   return useQuery({
     queryKey: queryKeys.watchlists.list(),
     queryFn: async (): Promise<WatchlistListResponse> => {
@@ -74,7 +71,6 @@ export function useWatchlists() {
         throw error;
       }
     },
-    enabled: !!token,
     staleTime: 30_000,
     gcTime: 10 * 60 * 1000,
   });

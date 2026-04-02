@@ -49,6 +49,22 @@ async function getSnapshotFallback(endpoint: string): Promise<unknown | null> {
   if (endpoint.startsWith('/news')) {
     return s?.news;
   }
+  // /watchlists
+  if (endpoint === '/watchlists') {
+    return s?.watchlists;
+  }
+  // /watchlists/:id/items
+  if (endpoint.match(/\/watchlists\/\d+\/items/)) {
+    return s?.watchlistItems;
+  }
+  // /alerts/surge
+  if (endpoint.includes('/alerts/surge')) {
+    return { data: [] };
+  }
+  // /stocks/surge/causes
+  if (endpoint.includes('/surge/causes')) {
+    return { data: [] };
+  }
   // /stocks/:symbol/prices
   const priceMatch = endpoint.match(/\/stocks\/(\d+)\/prices/);
   if (priceMatch) {

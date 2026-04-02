@@ -650,5 +650,67 @@
       "hasNext": true,
       "hasPrev": false
     }
+  },
+  "watchlists": {
+    "data": [
+      {
+        "id": 3,
+        "name": "내 관심종목",
+        "itemCount": 4,
+        "createdAt": "2026-03-30T15:44:46.312Z"
+      }
+    ]
+  },
+  "watchlistItems": {
+    "data": [
+      {
+        "id": 15,
+        "stockId": 18,
+        "symbol": "247540",
+        "name": "에코프로비엠",
+        "market": "KOSDAQ",
+        "currentPrice": 196900,
+        "changeRate": -2.52,
+        "volume": 728719,
+        "tradeValue": 0,
+        "addedAt": "2026-03-30T16:50:26.582Z"
+      },
+      {
+        "id": 14,
+        "stockId": 1,
+        "symbol": "005930",
+        "name": "삼성전자",
+        "market": "KOSPI",
+        "currentPrice": 178400,
+        "changeRate": -5.91,
+        "volume": 38524084,
+        "tradeValue": 0,
+        "addedAt": "2026-03-30T16:41:00.834Z"
+      },
+      {
+        "id": 13,
+        "stockId": 8,
+        "symbol": "035420",
+        "name": "NAVER",
+        "market": "KOSPI",
+        "currentPrice": 195800,
+        "changeRate": -6.76,
+        "volume": 1464904,
+        "tradeValue": 0,
+        "addedAt": "2026-03-30T16:38:15.486Z"
+      },
+      {
+        "id": 12,
+        "stockId": 2,
+        "symbol": "000660",
+        "name": "SK하이닉스",
+        "market": "KOSPI",
+        "currentPrice": 830000,
+        "changeRate": -7.05,
+        "volume": 5881045,
+        "tradeValue": 0,
+        "addedAt": "2026-03-30T15:58:50.375Z"
+      }
+    ]
   }
 }
