@@ -1,0 +1,91 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e3]:
+    - banner [ref=e4]:
+      - generic [ref=e6]:
+        - img [ref=e7]
+        - textbox "종목 검색 (코드 또는 이름)" [ref=e10]
+      - generic [ref=e11]:
+        - generic [ref=e12]:
+          - img [ref=e13]
+          - generic [ref=e20]: 연결 끊김
+        - generic [ref=e21]: 장 마감
+      - generic [ref=e22]:
+        - button "편집" [ref=e23] [cursor=pointer]:
+          - img [ref=e24]
+          - text: 편집
+        - button "위젯" [ref=e27] [cursor=pointer]:
+          - img [ref=e28]
+          - text: 위젯
+        - button "사용자 설정" [ref=e33] [cursor=pointer]:
+          - img [ref=e34]
+    - main [ref=e37]:
+      - generic [ref=e38]:
+        - generic [ref=e40]:
+          - generic [ref=e41]:
+            - generic [ref=e42]:
+              - img [ref=e44]
+              - heading "관심종목" [level=3] [ref=e51]
+            - button "축소" [ref=e53] [cursor=pointer]:
+              - img [ref=e54]
+          - generic [ref=e60]: 로딩 중...
+        - generic [ref=e64]:
+          - generic [ref=e65]:
+            - generic [ref=e66]:
+              - img [ref=e68]
+              - heading "차트 - 086520" [level=3] [ref=e75]
+            - generic [ref=e76]:
+              - generic [ref=e77]:
+                - button "1분" [ref=e78] [cursor=pointer]
+                - button "5분" [ref=e79] [cursor=pointer]
+                - button "15분" [ref=e80] [cursor=pointer]
+                - button "1시간" [ref=e81] [cursor=pointer]
+                - button "일봉" [ref=e82] [cursor=pointer]
+              - button "축소" [ref=e83] [cursor=pointer]:
+                - img [ref=e84]
+          - generic [ref=e90]: 차트 로딩 중...
+        - generic [ref=e94]:
+          - generic [ref=e95]:
+            - generic [ref=e96]:
+              - img [ref=e98]
+              - heading "뉴스 피드" [level=3] [ref=e105]
+            - button "축소" [ref=e107] [cursor=pointer]:
+              - img [ref=e108]
+          - generic [ref=e114]: 뉴스 로딩 중...
+        - generic [ref=e118]:
+          - generic [ref=e119]:
+            - generic [ref=e120]:
+              - img [ref=e122]
+              - heading "테마 요약" [level=3] [ref=e129]
+            - button "축소" [ref=e131] [cursor=pointer]:
+              - img [ref=e132]
+          - generic [ref=e138]: 테마 로딩 중...
+        - generic [ref=e142]:
+          - generic [ref=e143]:
+            - generic [ref=e144]:
+              - img [ref=e146]
+              - heading "급등 알림" [level=3] [ref=e153]
+            - button "축소" [ref=e155] [cursor=pointer]:
+              - img [ref=e156]
+          - generic [ref=e162]: 알림 로딩 중...
+        - generic [ref=e166]:
+          - generic [ref=e167]:
+            - generic [ref=e168]:
+              - img [ref=e170]
+              - heading "시장 지수" [level=3] [ref=e177]
+            - button "축소" [ref=e179] [cursor=pointer]:
+              - img [ref=e180]
+          - generic [ref=e186]: 지수 로딩 중...
+        - generic [ref=e190]:
+          - generic [ref=e191]:
+            - generic [ref=e192]:
+              - img [ref=e194]
+              - heading "거래량 상위" [level=3] [ref=e201]
+            - generic [ref=e202]:
+              - generic [ref=e203]:
+                - button "전체" [ref=e204] [cursor=pointer]
+                - button "kospi" [ref=e205] [cursor=pointer]
+                - button "kosdaq" [ref=e206] [cursor=pointer]
+              - button "축소" [ref=e207] [cursor=pointer]:
+                - img [ref=e208]
+          - generic [ref=e214]: 로딩 중...
+  - alert [ref=e217]

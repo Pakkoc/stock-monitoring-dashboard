@@ -38,10 +38,6 @@ interface CandlestickChartWidgetProps {
 }
 
 const TIMEFRAME_LABELS: Record<Timeframe, string> = {
-  '1m': '1분',
-  '5m': '5분',
-  '15m': '15분',
-  '1h': '1시간',
   '1d': '일봉',
 };
 

@@ -52,7 +52,7 @@ export const useDashboardStore = create<DashboardState>()(
       layouts: DEFAULT_LAYOUTS,
       visibleWidgets: [...ALL_WIDGET_TYPES],
       isEditMode: false,
-      activeSymbol: null,
+      activeSymbol: '005930',
       previousSymbols: [],
 
       setLayouts: (layouts) => set({ layouts }),
