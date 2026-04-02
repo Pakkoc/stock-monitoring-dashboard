@@ -37,7 +37,7 @@ interface CandlestickChartWidgetProps {
   showVolume?: boolean;
 }
 
-const TIMEFRAME_LABELS: Record<Timeframe, string> = {
+const TIMEFRAME_LABELS: Partial<Record<Timeframe, string>> = {
   '1d': '일봉',
 };
 
