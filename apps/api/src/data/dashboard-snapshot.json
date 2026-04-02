@@ -1,0 +1,654 @@
+{
+  "snapshotAt": "2026-04-02T07:55:38.051Z",
+  "stocks": {
+    "data": [
+      {
+        "id": 1,
+        "symbol": "005930",
+        "name": "삼성전자",
+        "market": "KOSPI",
+        "sector": "반도체",
+        "currentPrice": 178400,
+        "changeRate": -5.91,
+        "changeAmount": -11200,
+        "volume": 38524084,
+        "tradeValue": 0,
+        "high": 193600,
+        "low": 175000,
+        "open": 192600,
+        "updatedAt": "2026-04-02T07:55:37.947Z"
+      },
+      {
+        "id": 2,
+        "symbol": "000660",
+        "name": "SK하이닉스",
+        "market": "KOSPI",
+        "sector": "반도체",
+        "currentPrice": 830000,
+        "changeRate": -7.05,
+        "changeAmount": -63000,
+        "volume": 5881045,
+        "tradeValue": 0,
+        "high": 914000,
+        "low": 818000,
+        "open": 912000,
+        "updatedAt": "2026-04-02T07:55:37.947Z"
+      },
+      {
+        "id": 19,
+        "symbol": "086520",
+        "name": "에코프로",
+        "market": "KOSDAQ",
+        "sector": "2차전지",
+        "currentPrice": 142400,
+        "changeRate": -4.49,
+        "changeAmount": -6700,
+        "volume": 1867870,
+        "tradeValue": 0,
+        "high": 155200,
+        "low": 140800,
+        "open": 151200,
+        "updatedAt": "2026-04-02T07:55:37.947Z"
+      },
+      {
+        "id": 20,
+        "symbol": "403870",
+        "name": "HPSP",
+        "market": "KOSDAQ",
+        "sector": "반도체장비",
+        "currentPrice": 40850,
+        "changeRate": -8.2,
+        "changeAmount": -3650,
+        "volume": 1825169,
+        "tradeValue": 0,
+        "high": 44950,
+        "low": 40350,
+        "open": 44950,
+        "updatedAt": "2026-04-02T07:55:37.947Z"
+      },
+      {
+        "id": 6,
+        "symbol": "006400",
+        "name": "삼성SDI",
+        "market": "KOSPI",
+        "sector": "2차전지",
+        "currentPrice": 443000,
+        "changeRate": 2.55,
+        "changeAmount": 11000,
+        "volume": 1822137,
+        "tradeValue": 0,
+        "high": 460000,
+        "low": 430000,
+        "open": 434500,
+        "updatedAt": "2026-04-02T07:55:37.947Z"
+      },
+      {
+        "id": 9,
+        "symbol": "035720",
+        "name": "카카오",
+        "market": "KOSPI",
+        "sector": "IT서비스",
+        "currentPrice": 45400,
+        "changeRate": -5.91,
+        "changeAmount": -2850,
+        "volume": 1527044,
+        "tradeValue": 0,
+        "high": 48900,
+        "low": 45100,
+        "open": 48650,
+        "updatedAt": "2026-04-02T07:55:37.947Z"
+      },
+      {
+        "id": 8,
+        "symbol": "035420",
+        "name": "NAVER",
+        "market": "KOSPI",
+        "sector": "IT서비스",
+        "currentPrice": 195800,
+        "changeRate": -6.76,
+        "changeAmount": -14200,
+        "volume": 1464904,
+        "tradeValue": 0,
+        "high": 212000,
+        "low": 194600,
+        "open": 211500,
+        "updatedAt": "2026-04-02T07:55:37.947Z"
+      },
+      {
+        "id": 4,
+        "symbol": "005380",
+        "name": "현대자동차",
+        "market": "KOSPI",
+        "sector": "자동차",
+        "currentPrice": 465500,
+        "changeRate": -4.61,
+        "changeAmount": -22500,
+        "volume": 1331860,
+        "tradeValue": 0,
+        "high": 499500,
+        "low": 457000,
+        "open": 499000,
+        "updatedAt": "2026-04-02T07:55:37.947Z"
+      },
+      {
+        "id": 5,
+        "symbol": "000270",
+        "name": "기아",
+        "market": "KOSPI",
+        "sector": "자동차",
+        "currentPrice": 150600,
+        "changeRate": -3.03,
+        "changeAmount": -4700,
+        "volume": 1121617,
+        "tradeValue": 0,
+        "high": 160300,
+        "low": 148600,
+        "open": 157900,
+        "updatedAt": "2026-04-02T07:55:37.947Z"
+      },
+      {
+        "id": 12,
+        "symbol": "086790",
+        "name": "하나금융지주",
+        "market": "KOSPI",
+        "sector": "금융",
+        "currentPrice": 110400,
+        "changeRate": -2.13,
+        "changeAmount": -2400,
+        "volume": 1096258,
+        "tradeValue": 0,
+        "high": 117000,
+        "low": 109100,
+        "open": 115000,
+        "updatedAt": "2026-04-02T07:55:37.947Z"
+      },
+      {
+        "id": 11,
+        "symbol": "055550",
+        "name": "신한지주",
+        "market": "KOSPI",
+        "sector": "금융",
+        "currentPrice": 91700,
+        "changeRate": -1.71,
+        "changeAmount": -1600,
+        "volume": 1036978,
+        "tradeValue": 0,
+        "high": 97300,
+        "low": 90800,
+        "open": 95000,
+        "updatedAt": "2026-04-02T07:55:37.947Z"
+      },
+      {
+        "id": 10,
+        "symbol": "105560",
+        "name": "KB금융",
+        "market": "KOSPI",
+        "sector": "금융",
+        "currentPrice": 146500,
+        "changeRate": -1.21,
+        "changeAmount": -1800,
+        "volume": 981023,
+        "tradeValue": 0,
+        "high": 155300,
+        "low": 144500,
+        "open": 151300,
+        "updatedAt": "2026-04-02T07:55:37.947Z"
+      },
+      {
+        "id": 14,
+        "symbol": "066570",
+        "name": "LG전자",
+        "market": "KOSPI",
+        "sector": "전자",
+        "currentPrice": 108800,
+        "changeRate": -3.29,
+        "changeAmount": -3700,
+        "volume": 882435,
+        "tradeValue": 0,
+        "high": 116400,
+        "low": 107200,
+        "open": 115300,
+        "updatedAt": "2026-04-02T07:55:37.947Z"
+      },
+      {
+        "id": 15,
+        "symbol": "003670",
+        "name": "포스코퓨처엠",
+        "market": "KOSPI",
+        "sector": "2차전지",
+        "currentPrice": 213000,
+        "changeRate": 0.71,
+        "changeAmount": 1500,
+        "volume": 841291,
+        "tradeValue": 0,
+        "high": 230000,
+        "low": 210000,
+        "open": 215000,
+        "updatedAt": "2026-04-02T07:55:37.947Z"
+      },
+      {
+        "id": 18,
+        "symbol": "247540",
+        "name": "에코프로비엠",
+        "market": "KOSDAQ",
+        "sector": "2차전지",
+        "currentPrice": 196900,
+        "changeRate": -2.52,
+        "changeAmount": -5100,
+        "volume": 728719,
+        "tradeValue": 0,
+        "high": 211000,
+        "low": 193700,
+        "open": 202500,
+        "updatedAt": "2026-04-02T07:55:37.947Z"
+      },
+      {
+        "id": 17,
+        "symbol": "068270",
+        "name": "셀트리온",
+        "market": "KOSPI",
+        "sector": "바이오",
+        "currentPrice": 196700,
+        "changeRate": -4.51,
+        "changeAmount": -9300,
+        "volume": 640427,
+        "tradeValue": 0,
+        "high": 208000,
+        "low": 193900,
+        "open": 207000,
+        "updatedAt": "2026-04-02T07:55:37.947Z"
+      },
+      {
+        "id": 3,
+        "symbol": "373220",
+        "name": "LG에너지솔루션",
+        "market": "KOSPI",
+        "sector": "2차전지",
+        "currentPrice": 404500,
+        "changeRate": -0.61,
+        "changeAmount": -2500,
+        "volume": 532803,
+        "tradeValue": 0,
+        "high": 421500,
+        "low": 399500,
+        "open": 407500,
+        "updatedAt": "2026-04-02T07:55:37.947Z"
+      },
+      {
+        "id": 7,
+        "symbol": "051910",
+        "name": "LG화학",
+        "market": "KOSPI",
+        "sector": "화학",
+        "currentPrice": 302000,
+        "changeRate": -3.36,
+        "changeAmount": -10500,
+        "volume": 438492,
+        "tradeValue": 0,
+        "high": 326500,
+        "low": 298000,
+        "open": 316000,
+        "updatedAt": "2026-04-02T07:55:37.947Z"
+      },
+      {
+        "id": 13,
+        "symbol": "012330",
+        "name": "현대모비스",
+        "market": "KOSPI",
+        "sector": "자동차부품",
+        "currentPrice": 389500,
+        "changeRate": -4.77,
+        "changeAmount": -19500,
+        "volume": 194342,
+        "tradeValue": 0,
+        "high": 414000,
+        "low": 384000,
+        "open": 413500,
+        "updatedAt": "2026-04-02T07:55:37.947Z"
+      },
+      {
+        "id": 16,
+        "symbol": "207940",
+        "name": "삼성바이오로직스",
+        "market": "KOSPI",
+        "sector": "바이오",
+        "currentPrice": 1585000,
+        "changeRate": 0.83,
+        "changeAmount": 13000,
+        "volume": 77387,
+        "tradeValue": 0,
+        "high": 1657000,
+        "low": 1564000,
+        "open": 1586000,
+        "updatedAt": "2026-04-02T07:55:37.947Z"
+      }
+    ],
+    "meta": {
+      "page": 1,
+      "limit": 20,
+      "total": 20,
+      "totalPages": 1,
+      "hasNext": false,
+      "hasPrev": false
+    }
+  },
+  "indices": {
+    "data": [
+      {
+        "market": "KOSPI",
+        "currentValue": 5234.05,
+        "changeValue": 244.65,
+        "changeRate": 4.9,
+        "updatedAt": "2026-04-02T07:55:38.002Z"
+      },
+      {
+        "market": "KOSDAQ",
+        "currentValue": 1056.34,
+        "changeValue": 59.84,
+        "changeRate": 6.01,
+        "updatedAt": "2026-04-02T07:55:38.020Z"
+      }
+    ]
+  },
+  "themes": {
+    "themes": [
+      {
+        "themeId": "1",
+        "name": "반도체",
+        "changePercent": -7.05,
+        "stockCount": 3,
+        "topStocks": [
+          {
+            "symbol": "403870",
+            "name": "HPSP",
+            "changePercent": -8.2
+          },
+          {
+            "symbol": "000660",
+            "name": "SK하이닉스",
+            "changePercent": -7.05
+          },
+          {
+            "symbol": "005930",
+            "name": "삼성전자",
+            "changePercent": -5.91
+          }
+        ],
+        "sparklineData": [],
+        "totalTradeValue": 0
+      },
+      {
+        "themeId": "2",
+        "name": "2차전지",
+        "changePercent": -1.29,
+        "stockCount": 6,
+        "topStocks": [
+          {
+            "symbol": "086520",
+            "name": "에코프로",
+            "changePercent": -4.49
+          },
+          {
+            "symbol": "051910",
+            "name": "LG화학",
+            "changePercent": -3.36
+          },
+          {
+            "symbol": "006400",
+            "name": "삼성SDI",
+            "changePercent": 2.55
+          },
+          {
+            "symbol": "247540",
+            "name": "에코프로비엠",
+            "changePercent": -2.52
+          },
+          {
+            "symbol": "003670",
+            "name": "포스코퓨처엠",
+            "changePercent": 0.71
+          }
+        ],
+        "sparklineData": [],
+        "totalTradeValue": 0
+      },
+      {
+        "themeId": "3",
+        "name": "AI/소프트웨어",
+        "changePercent": -6.33,
+        "stockCount": 2,
+        "topStocks": [
+          {
+            "symbol": "035420",
+            "name": "NAVER",
+            "changePercent": -6.76
+          },
+          {
+            "symbol": "035720",
+            "name": "카카오",
+            "changePercent": -5.91
+          }
+        ],
+        "sparklineData": [],
+        "totalTradeValue": 0
+      },
+      {
+        "themeId": "4",
+        "name": "바이오",
+        "changePercent": -1.84,
+        "stockCount": 2,
+        "topStocks": [
+          {
+            "symbol": "068270",
+            "name": "셀트리온",
+            "changePercent": -4.51
+          },
+          {
+            "symbol": "207940",
+            "name": "삼성바이오로직스",
+            "changePercent": 0.83
+          }
+        ],
+        "sparklineData": [],
+        "totalTradeValue": 0
+      },
+      {
+        "themeId": "5",
+        "name": "금융",
+        "changePercent": -1.68,
+        "stockCount": 3,
+        "topStocks": [
+          {
+            "symbol": "086790",
+            "name": "하나금융지주",
+            "changePercent": -2.13
+          },
+          {
+            "symbol": "055550",
+            "name": "신한지주",
+            "changePercent": -1.71
+          },
+          {
+            "symbol": "105560",
+            "name": "KB금융",
+            "changePercent": -1.21
+          }
+        ],
+        "sparklineData": [],
+        "totalTradeValue": 0
+      }
+    ]
+  },
+  "news": {
+    "data": [
+      {
+        "id": 1026,
+        "title": "갈렙앤컴퍼니 등 3개사 'AI 의료 혁신' 업무협약",
+        "url": "https://www.yna.co.kr/view/AKR20260402147300060",
+        "source": "RSS_YONHAP",
+        "summary": "(서울=연합뉴스) 우영식 기자 = 경영 컨설팅 전문기업 갈렙앤컴퍼니 이노베이션센터는 2일 산업 인공지능(AI) 전문기업 에이아이네이션, AI 인...",
+        "publishedAt": "2026-04-02T07:21:49.000Z"
+      },
+      {
+        "id": 1027,
+        "title": "[특징주] 항공주, 트럼프 연설 후 유가 폭등에 줄줄이 급락 마감(종합)",
+        "url": "https://www.yna.co.kr/view/AKR20260402052651008",
+        "source": "RSS_YONHAP",
+        "summary": "(서울=연합뉴스) 김유향 기자 = 도널드 트럼프 미국 대통령이 2일 이란에 대한 강경 대응 입장을 내놓은 가운데 국제 유가가 반등하자 항공 관련...",
+        "publishedAt": "2026-04-02T07:13:46.000Z"
+      },
+      {
+        "id": 1028,
+        "title": "트럼프 '이란 강력 타격'…국제유가 다시 급등(종합)",
+        "url": "https://www.yna.co.kr/view/AKR20260402081351009",
+        "source": "RSS_YONHAP",
+        "summary": "(서울=연합뉴스) 김태균 기자 = 도널드 트럼프 미국 대통령이 이란과 합의가 이뤄지지 않으면 2∼3주에 걸쳐 이란을 극도로 강하게 타격할 것이라...",
+        "publishedAt": "2026-04-02T07:12:58.000Z"
+      },
+      {
+        "id": 1029,
+        "title": "코스피, 트럼프 연설에 4%대 급락 5,200대 후퇴…사이드카 발동(종합)",
+        "url": "https://www.yna.co.kr/view/AKR20260402145100008",
+        "source": "RSS_YONHAP",
+        "summary": "(서울=연합뉴스) 이민영 기자 = 코스피가 2일 장중 도널드 트럼프 미국 대통령의 연설을 소화하며 급락 전환해 단숨에 5,200대로 밀려났다.",
+        "publishedAt": "2026-04-02T07:11:29.000Z"
+      },
+      {
+        "id": 1030,
+        "title": "서울·경기 비주택→준주택 탈바꿈 시동…공공임대 2천가구 공급 목표",
+        "url": "https://www.yna.co.kr/view/AKR20260402137500003",
+        "source": "RSS_YONHAP",
+        "summary": "(세종=연합뉴스) 홍국기 기자 = 정부가 서울·경기 도심 내 공실 상가·오피스 등의 비(非)주택을 오피스텔·기숙사 등의 준(準)주택으로 용도변경...",
+        "publishedAt": "2026-04-02T07:00:01.000Z"
+      },
+      {
+        "id": 1031,
+        "title": "종전 기대감에 찬물 끼얹은 트럼프…증시 급락에 환율은 급등(종합)",
+        "url": "https://www.yna.co.kr/view/AKR20260402089151008",
+        "source": "RSS_YONHAP",
+        "summary": "(서울=연합뉴스) 황철환 기자 = 이란과의 전쟁이 &apos;아주 곧&apos; 끝날 것이라며 시장에 안도감을 불어넣은 지 불과 하루 만에 도널드 트럼프 미국 대...",
+        "publishedAt": "2026-04-02T06:55:54.000Z"
+      },
+      {
+        "id": 1032,
+        "title": "경기 광주시, 삼동역 일원 지구단위계획 개발 추진",
+        "url": "https://www.yna.co.kr/view/AKR20260402141800061",
+        "source": "RSS_YONHAP",
+        "summary": "(경기 광주=연합뉴스) 이우성 기자 = 경기 광주시가 삼동역 일원을 지구단위계획으로 개발하는 방안을 추진한다.",
+        "publishedAt": "2026-04-02T06:53:47.000Z"
+      },
+      {
+        "id": 1033,
+        "title": "[특징주] '호르무즈 우회' 파이프라인 검토설에 관련주 강세(종합)",
+        "url": "https://www.yna.co.kr/view/AKR20260402127951008",
+        "source": "RSS_YONHAP",
+        "summary": "(서울=연합뉴스) 황철환 기자 = 걸프만 산유국들이 이란에 의해 봉쇄된 호르무즈 해협을 우회해 원유와 천연가스를 수출하기 위한 새 파이프라인 건...",
+        "publishedAt": "2026-04-02T06:50:51.000Z"
+      },
+      {
+        "id": 1034,
+        "title": "[특징주] 건설株, 종전 기대감 약화에 급락…대우건설 15%↓",
+        "url": "https://www.yna.co.kr/view/AKR20260402138500008",
+        "source": "RSS_YONHAP",
+        "summary": "(서울=연합뉴스) 임은진 기자 = 건설주가 2일 미국·이스라엘과 이란 간 전쟁 종식 기대감 약화로 크게 하락했다.",
+        "publishedAt": "2026-04-02T06:49:32.000Z"
+      },
+      {
+        "id": 1035,
+        "title": "[특징주] 트럼프 '나토 탈퇴' 위협속 한화에어로 등 강세 마감(종합)",
+        "url": "https://www.yna.co.kr/view/AKR20260402046451008",
+        "source": "RSS_YONHAP",
+        "summary": "(서울=연합뉴스) 황철환 기자 = 도널드 트럼프 미국 대통령이 이란 침공에 협력하지 않았다는 이유로 북대서양조약기구(NATO·나토) 탈퇴를 위협...",
+        "publishedAt": "2026-04-02T06:47:27.000Z"
+      },
+      {
+        "id": 1036,
+        "title": "트럼프 강경 발언에 환율 20원 가까이 반등…1,519.7원",
+        "url": "https://www.yna.co.kr/view/AKR20260402138200002",
+        "source": "RSS_YONHAP",
+        "summary": "(서울=연합뉴스) 임지우 기자 = 도널드 트럼프 미국 대통령이 대국민 연설에서 이란을 상대로 강경 발언을 내놓으면서 원/달러 환율이 20원 가까...",
+        "publishedAt": "2026-04-02T06:47:24.000Z"
+      },
+      {
+        "id": 1011,
+        "title": "종전 기대 깬 트럼프 연설…\"당분간 약세장 나타날 수도\"(종합)",
+        "url": "https://www.yna.co.kr/view/AKR20260402091151008",
+        "source": "RSS_YONHAP",
+        "summary": "(서울=연합뉴스) 고은지 기자 = 도널드 트럼프 미국 대통령의 2일 대국민 연설이 기대와 다른 방향으로 나오자 증권가에서는 당분간 위험 회피 심...",
+        "publishedAt": "2026-04-02T06:43:37.000Z"
+      },
+      {
+        "id": 1012,
+        "title": "李대통령 \"이번 위기는 소나기 아닌 폭풍우…비상한 대책 필요\"(종합)",
+        "url": "https://www.yna.co.kr/view/AKR20260402134800001",
+        "source": "RSS_YONHAP",
+        "summary": "(서울=연합뉴스) 임형섭 기자 = 이재명 대통령은 2일 중동 전쟁으로 인한 경제위기 우려가 커지는 것과 관련해 \"지금 위기는 잠깐 내리고 그치는...",
+        "publishedAt": "2026-04-02T06:42:06.000Z"
+      },
+      {
+        "id": 1013,
+        "title": "제주지역 MICE 산업 경쟁력 강화 위한 협의체 출범",
+        "url": "https://www.yna.co.kr/view/AKR20260402137200056",
+        "source": "RSS_YONHAP",
+        "summary": "(제주=연합뉴스) 백나용 기자 = 제주지역 마이스((기업 회의·관광·컨벤션·전시) 산업의 지속 가능한 발전을 위한 협의체가 2일 출범했다.",
+        "publishedAt": "2026-04-02T06:41:42.000Z"
+      },
+      {
+        "id": 1014,
+        "title": "경찰, '신안산선 터널 붕괴' 수사 마무리 수순…\"곧 송치 방침\"",
+        "url": "https://www.yna.co.kr/view/AKR20260402135600061",
+        "source": "RSS_YONHAP",
+        "summary": "(수원=연합뉴스) 김솔 기자 = 국토교통부 사고조사위원회가 지난해 4월 발생한 광명 신안산선 터널 붕괴 사고의 조사 결과를 발표함에 따라 경찰도...",
+        "publishedAt": "2026-04-02T06:40:09.000Z"
+      },
+      {
+        "id": 1015,
+        "title": "울산·경남 지역인재 합동 채용설명회…27개 기관·기업 참여",
+        "url": "https://www.yna.co.kr/view/AKR20260402133500057",
+        "source": "RSS_YONHAP",
+        "summary": "(울산=연합뉴스) 김용태 기자 = 2026 울산·경남 지역인재 합동 채용설명회가 2일 울산대학교에서 국토교통부 주최, 울산시·울산대 공동 주관으...",
+        "publishedAt": "2026-04-02T06:38:23.000Z"
+      },
+      {
+        "id": 1016,
+        "title": "강원도, 지역필수의료체계 구축 본격화…인력 양성·정주 강화",
+        "url": "https://www.yna.co.kr/view/AKR20260402135000062",
+        "source": "RSS_YONHAP",
+        "summary": "(춘천=연합뉴스) 이재현 기자 = 지역 필수 의료체계 구축을 위해 강원특별자치도와 도내 의과대학·병원 등 19개 기관이 머리를 맞댔다.",
+        "publishedAt": "2026-04-02T06:37:31.000Z"
+      },
+      {
+        "id": 1017,
+        "title": "코스피, 4%대 급락 5,200대 마감…코스닥도 5% 폭락",
+        "url": "https://www.yna.co.kr/view/AKR20260402137100008",
+        "source": "RSS_YONHAP",
+        "summary": "(서울=연합뉴스) 이민영 기자 = 코스피가 2일 장중 도널드 트럼프 미국 대통령의 연설을 소화하며 급락 전환해 5,200대로 밀려났다.",
+        "publishedAt": "2026-04-02T06:37:07.000Z"
+      },
+      {
+        "id": 1018,
+        "title": "외국환시세(4월2일·마감가)",
+        "url": "https://www.yna.co.kr/view/AKR20260402136700002",
+        "source": "RSS_YONHAP",
+        "summary": "(15:30)",
+        "publishedAt": "2026-04-02T06:35:12.000Z"
+      },
+      {
+        "id": 1019,
+        "title": "원주시, 지역주도형 AI대전환 공모선정…의료첨단산업 성장 기대",
+        "url": "https://www.yna.co.kr/view/AKR20260402132000062",
+        "source": "RSS_YONHAP",
+        "summary": "(원주=연합뉴스) 임보연 기자 = 강원 원주시는 중소벤처기업부의 2026년 지역 주도형 AI 대전환 사업 선정으로 의료 첨단산업 중심지 도약 및...",
+        "publishedAt": "2026-04-02T06:34:19.000Z"
+      }
+    ],
+    "meta": {
+      "page": 1,
+      "limit": 20,
+      "total": 1036,
+      "totalPages": 52,
+      "hasNext": true,
+      "hasPrev": false
+    }
+  }
+}
